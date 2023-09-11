@@ -3,13 +3,15 @@
 
 
 #include "hoch_helper.h"
+#include <string>
 
 class arrow
 {
 public: // private variables and function can only be accessed inside the class
-    arrow(string filename); // class constructor
+    arrow(std::string filename); // class constructor
     ~arrow(){}; // class destructor (default: releases memory)
 
+    void shoot_arrow();
 
     
 private:
@@ -18,7 +20,7 @@ private:
     double m_time_step;
     double m_ref_area;
     double m_ref_length;
-    double m_V;
+    //double m_V;
     double m_z;
     double m_theta;
     double m_weight;
@@ -40,6 +42,7 @@ private:
     double m_alpha;
     double m_mass;
     double m_g;
+    double m_rho;
 
     // declare state variables
     double m_u;
@@ -47,17 +50,31 @@ private:
     double m_q;
     double m_x_f;
     double m_z_f;
-    double m_theta;
+    
+    // declare variables for arrow_rk4
+    double m_t0;
+    int m_size;
+    double* m_k1;
+    double* m_k2;
+    double* m_k3;
+    double* m_k4;
+    double* m_y_temp;
+
 
     // declare arrays for holding info
-    double m_y[6];
-    double m_dy[6];
+    double* m_y;
+    double* m_dy;
     //double* FM[3];
 
+
     // functions
-    void aerodynamics_2_2(double* y, double* FM);
+    void aerodynamics_2_2(Atmosphere& atm);
     
-    double* arrow_EOM(double t, double* y);
+    double* arrow_EOM(Atmosphere& atm);
+
+    void arrow_rk4(Atmosphere& atm);
+
+    
 
 };
 
