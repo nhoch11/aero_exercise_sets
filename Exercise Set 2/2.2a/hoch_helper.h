@@ -4,7 +4,6 @@
 #include "cmath"
 #include <iostream>
 #include <iomanip>
-#include "arrow.h"
 
 #include "json.hpp"
 using json = nlohmann::json;

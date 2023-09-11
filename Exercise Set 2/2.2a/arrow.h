@@ -5,6 +5,7 @@
 #include "hoch_helper.h"
 #include <string>
 
+
 class arrow
 {
 public: // private variables and function can only be accessed inside the class
@@ -15,6 +16,8 @@ public: // private variables and function can only be accessed inside the class
 
     
 private:
+
+
 
     // declare json variables
     double m_time_step;
@@ -66,8 +69,7 @@ private:
     double* m_dy;
     //double* FM[3];
 
-
-    // functions
+    // functions;
     void aerodynamics_2_2(Atmosphere& atm);
     
     double* arrow_EOM(Atmosphere& atm);
