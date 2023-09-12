@@ -16,8 +16,8 @@ public: // private variables and function can only be accessed inside the class
 
     
 private:
-
-
+    
+    Atmosphere m_atm;
 
     // declare json variables
     double m_time_step;
@@ -55,13 +55,11 @@ private:
     double m_z_f;
     
     // declare variables for arrow_rk4
-    double m_t0;
-    int m_size;
-    double* m_k1;
-    double* m_k2;
-    double* m_k3;
-    double* m_k4;
-    double* m_y_temp;
+    double* m_k1 = new double[12];
+    double* m_k2 = new double[12];
+    double* m_k3 = new double[12];
+    double* m_k4 = new double[12];
+    double* m_y_temp = new double[12];
 
 
     // declare arrays for holding info
@@ -70,7 +68,7 @@ private:
     //double* FM[3];
 
     // functions;
-    void aerodynamics_2_2(Atmosphere& atm);
+    void aerodynamics_2_2(double t0, double* y0, double dt, int size, double* ans);
     
     double* arrow_EOM(Atmosphere& atm);
 
