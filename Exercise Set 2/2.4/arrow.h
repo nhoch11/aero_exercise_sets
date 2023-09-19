@@ -13,7 +13,7 @@ public: // private variables and function can only be accessed inside the class
     ~arrow(){}; // class destructor (default: releases memory)
 
     void exercise_2_2();
-
+    void exercise_2_4();
     
 private:
     
@@ -66,6 +66,9 @@ private:
     void arrow_rk4_func_2_2(double t, double*y, double* ans);
     void aerodynamics_2_2(double* y, double* ans);
     
+    void arrow_rk4_2_4(double t0, double* y0, double dt, int size, double* ans);
+    void arrow_rk4_func_2_4(double t, double*y, double* ans);
+    void aerodynamics_2_4(double* y, double* ans);
     
 
 };
