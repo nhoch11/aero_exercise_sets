@@ -63,6 +63,7 @@ void arrow::aerodynamics_2_2(double* y, double* ans)
     ans[1] = -0.5*rho*pow(V,2)*m_ref_area*CL;
     ans[2] = 0.5*rho*pow(V,2)*m_ref_area*m_ref_length*Cm;
 }
+
 void arrow::arrow_rk4_func_2_2(double t, double* y, double* ans)
 {
     
