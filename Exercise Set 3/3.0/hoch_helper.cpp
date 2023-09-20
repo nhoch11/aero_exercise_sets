@@ -106,7 +106,6 @@ void get_atmospheric_properties_english(double altitude, Atmosphere& atm)
     
 }
 
-
 void rk4_array(double t0, double* y0, double dt, int size, double* ans)
 {
     // declare variables for k's
@@ -160,6 +159,47 @@ void rk4_array(double t0, double* y0, double dt, int size, double* ans)
         ans[i] = y0[i] + (k1[i] + 2.0*k2[i] + 2.0*k3[i] + k4[i])/6.0  ;
     }
     
+    
+}
+
+void array_copy(double* A, double* B, int size)
+{
+    for (int i=0; i < size; i++){
+        B[i] = A[i];
+    }
+}
+
+void quat_mult(double* A, double* B, double* ans)
+{
+
+}
+
+void quat_norm(double* quat)
+{
+    double magnitude = ;
+    quat[0] /= magnitude;
+    quat[1] /= magnitude;
+    quat[2] /= magnitude;
+    quat[3] /= magnitude;
+}
+
+void euler_to_quat(double* eul, double* quat)
+{
+
+}
+
+void quat_to_euler(double* quat, double* eul)
+{
+
+}
+
+void body_to_fixed(double* vec, double* quat, double* ans)
+{
+
+}
+
+void fixed_to_body(double* vec, double* quat, double* ans)
+{
     
 }
 
