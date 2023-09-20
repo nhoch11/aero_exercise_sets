@@ -171,12 +171,24 @@ void array_copy(double* A, double* B, int size)
 
 void quat_mult(double* A, double* B, double* ans)
 {
-
+    double a0 = A[0];
+    double ax = A[1];
+    double ay = A[2];
+    double az = A[3];
+    double b0 = B[0];
+    double bx = B[1];
+    double by = B[2];
+    double bz = B[3];
+    // equation 11.6.3
+    ans[0] = a0*b0 - ax*bx - ay*by - az*bz;
+    ans[1] = a0*bx + ax*b0 + ay*bz - az*by;
+    ans[2] = a0*by - ax*bz + ay*b0 + az*bx;
+    ans[3] = a0*bz + ax*by - ay*bx + az*b0;
 }
 
 void quat_norm(double* quat)
-{
-    double magnitude = ;
+{   // equation 11.6.5
+    double magnitude = sqrt(pow(quat[0], 2) + pow(quat[1], 2) + pow(quat[2], 2) + pow(quat[3], 2));
     quat[0] /= magnitude;
     quat[1] /= magnitude;
     quat[2] /= magnitude;
@@ -184,23 +196,80 @@ void quat_norm(double* quat)
 }
 
 void euler_to_quat(double* eul, double* quat)
-{
-
+{ // equation 11.7.8
+    double cphi2   = cos(eul[0]/2.0);
+    double ctheta2 = cos(eul[1]/2.0);
+    double cpsi2   = cos(eul[2]/2.0);
+    double sphi2   = sin(eul[0]/2.0);
+    double stheta2 = sin(eul[1]/2.0);
+    double spsi2   = sin(eul[2]/2.0);
+    quat[0] = cphi2*ctheta2*cpsi2 + sphi2*stheta2*spsi2;
+    quat[1] = sphi2*ctheta2*cpsi2 - cphi2*stheta2*spsi2;
+    quat[2] = cphi2*stheta2*cpsi2 + sphi2*ctheta2*spsi2;
+    quat[3] = cphi2*ctheta2*spsi2 - sphi2*stheta2*cpsi2;
 }
 
 void quat_to_euler(double* quat, double* eul)
-{
+{ // equation 11.7.11
+    double e0 = quat[0];
+    double ex = quat[1];
+    double ey = quat[2];
+    double ez = quat[3];
 
+    if (e0*ey - ex*ez == 0.5)
+    {
+        eul[0] = 2.0*asin(ex/cos(pi/4.0));
+        eul[1] = pi/2.0;
+        eul[2] = 0.0;
+    }
+
+    if (e0*ey - ex*ez == -0.5)
+    {
+        eul[0] = 2.0*asin(ex/cos(pi/4.0));
+        eul[1] = -pi/2.0;
+        eul[2] = 0.0;
+    }
+
+    else
+    {
+        eul[0] = atan2( 2.0*(e0*ex + ey*ez), pow(e0, 2.0) + pow(ez, 2.0) - pow(ex, 2.0) - pow(ey, 2.0));
+        eul[1] = asin(2.0*(e0*ey - ex*ez));
+        eul[2] = atan2( 2.0*(e0*ez + ex*ey), pow(e0, 2.0) + pow(ex, 2.0) - pow(ey, 2.0) - pow(ez, 2.0));
+    }
 }
 
 void body_to_fixed(double* vec, double* quat, double* ans)
-{
+{   
+    double vxb = vec[0];
+    double vyb = vec[1];
+    double vzb = vec[2];
+    double e0 = quat[0];
+    double ex = quat[1];
+    double ey = quat[2];
+    double ez = quat[3];
+    // equation 11.5.6
+
+    ans[0] = (pow(ex,2.0) + pow(e0,2.0) - pow(ey,2.0) - pow(ez,2.0))*vxb + 2.0*(ex*ey - ez*e0)*vyb + 2.0*(ex*ez + ey*e0)*vzb; 
+    ans[1] = 2.0*(ex*ey + ez*e0)*vxb + (pow(ey,2.0) + pow(e0,2.0) - pow(ex,2.0) - pow(ez,2.0))*vyb + 2.0*(ey*ez - ex*e0)*vzb;
+    ans[2] = 2.0*(ex*ez - ey*e0)*vxb + 2.0*(ey*ez + ex*e0)*vyb + (pow(ez,2.0) + pow(e0,2.0) - pow(ex,2.0) - pow(ey,2.0))*vzb;
 
 }
 
 void fixed_to_body(double* vec, double* quat, double* ans)
 {
-    
+    double vxb = vec[0];
+    double vyb = vec[1];
+    double vzb = vec[2];
+    double e0 = quat[0];
+    double ex = quat[1];
+    double ey = quat[2];
+    double ez = quat[3];
+    // equation 11.5.5
+
+    ans[0] = (pow(ex,2.0) + pow(e0,2.0) - pow(ey,2.0) - pow(ez,2.0))*vxb + 2.0*(ex*ey + ez*e0)*vyb + 2.0*(ex*ez - ey*e0)*vzb; 
+    ans[1] = 2.0*(ex*ey - ez*e0)*vxb + (pow(ey,2.0) + pow(e0,2.0) - pow(ex,2.0) - pow(ez,2.0))*vyb + 2.0*(ey*ez + ex*e0)*vzb;
+    ans[2] = 2.0*(ex*ez + ey*e0)*vxb + 2.0*(ey*ez - ex*e0)*vyb + (pow(ez,2.0) + pow(e0,2.0) - pow(ex,2.0) - pow(ey,2.0))*vzb;
+
 }
 
 double* f_array(double t, double* y)

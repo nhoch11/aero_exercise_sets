@@ -106,6 +106,12 @@ void get_atmospheric_properties_english(double altitude, Atmosphere& atm)
     
 }
 
+void array_copy(double* A, double* B, int size)
+{
+    for (int i=0; i < size; i++){
+        B[i] = A[i];
+    }
+}
 
 void rk4_array(double t0, double* y0, double dt, int size, double* ans)
 {

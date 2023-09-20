@@ -163,6 +163,13 @@ void rk4_array(double t0, double* y0, double dt, int size, double* ans)
     
 }
 
+void array_copy(double* A, double* B, int size)
+{
+    for (int i=0; i < size; i++){
+        B[i] = A[i];
+    }
+}
+
 double* f_array(double t, double* y)
 {
     double* derivatives = new double[2];

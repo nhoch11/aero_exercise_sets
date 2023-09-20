@@ -31,6 +31,7 @@ void get_atmospheric_properties_english(double altitude, Atmosphere& atm);
 void rk4_array(double t0, double* y0, double dt, int size, double* ans);
 
 double* f_array(double t, double* y);
+void array_copy(double* A, double* B, int size);
 
 double gravity_si(double H);
 
