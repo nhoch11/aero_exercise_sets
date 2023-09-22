@@ -353,6 +353,7 @@ void arrow::exercise_2_4()
 
 void arrow::aerodynamics_3_9(double* y, double* ans)
 {
+    // make dummy variables for readibility
     double u  = y[0];
     double v  = y[1];
     double w  = y[2];
@@ -394,10 +395,9 @@ void arrow::aerodynamics_3_9(double* y, double* ans)
 
 void arrow::arrow_rk4_func_3_9(double t, double* y, double* ans)
 {
-    
-    
+
     double* FM = new double[6];
-    // updatae aerodynamic data(call aerodynamics_2_2)
+    // update aerodynamic data(call aerodynamics_2_2)
     aerodynamics_3_9(y, FM);
     double Fxb = FM[0];
     double Fyb = FM[1];
@@ -416,38 +416,62 @@ void arrow::arrow_rk4_func_3_9(double t, double* y, double* ans)
     double xf = y[6]; 
     double yf = y[7];
     double zf = y[8];
-    double phi = y[9];
-    double theta = y[10];
-    double psi = y[11];
+    double e0 = y[9];
+    double ex = y[10];
+    double ey = y[11];
+    double ez = y[12];
 
     double g = gravity_english(-zf);
 
-    ans[0]  = (g * Fxb / m_weight) - (g * sin(theta)) + (r * v) - (q * w); // udot
-    ans[1]  = (g * Fyb / m_weight) + (g * sin(phi) * cos(theta)) + (p * w) - (r * u); // vdot
-    ans[2]  = (g * Fzb / m_weight) + (g * cos(phi) * cos(theta)) + (q * u) - (p * v); // wdot
-    ans[3]  = (Mxb / m_Ixx); // pdot
-    ans[4]  = (Myb + (m_Iyy - m_Ixx) * p * r) / m_Iyy; // qdot
-    ans[5]  = (Mzb + (m_Ixx - m_Iyy) * p * q) / m_Iyy; // rdot
-    ans[6]  = cos(theta) * cos(psi) * u + (sin(phi) * sin(theta) * cos(psi) - cos(phi) * sin(psi)) * v + (cos(phi) * sin(theta) * cos(psi) + sin(phi) * sin(psi)) * w; // xfdot
-    ans[7]  = (cos(theta) * sin(psi) * u) + (((sin(phi) * sin(theta) * sin(psi)) + (cos(phi) * cos(psi))) * v) + (((cos(phi) * sin(theta) * sin(psi)) - (sin(phi) * cos(psi))) * w); // yfdot
-    ans[8]  = (-sin(theta) * u) + (sin(phi) * cos(theta) * v) + (cos(phi) * cos(theta) * w); // zfdot
-    ans[9]  = p + (sin(phi)*sin(theta)/cos(theta))*q + (cos(phi)*sin(theta)/cos(theta))*r; // phi dot
-    ans[10] = cos(phi)*q - sin(phi)*r; // theta dot
-    ans[11] = ((sin(phi) / cos(theta)) * q) + ((cos(phi) / cos(theta)) * r); // psi dot
+    ans[0]  = (g*Fxb/m_weight) + (g*2.0*(ex*ez - ey*e0)) + (r*v) - (q*w); // udot
+    ans[1]  = (g*Fyb/m_weight) + (g*2.0*(ey*ez + ex*e0)) + (p*w) - (r*u); // vdot
+    ans[2]  = (g*Fzb/m_weight) + (g*(pow(ez,2.0) + pow(e0,2.0) - pow(ex,2.0) - pow(ey,2.0))) + (q*u) - (p*v); // wdot
+    ans[3]  = (Mxb/m_Ixx); // pdot
+    ans[4]  = (Myb + (m_Iyy - m_Ixx)*p*r)/m_Iyy; // qdot
+    ans[5]  = (Mzb + (m_Ixx - m_Iyy)*p*q)/m_Iyy; // rdot
+    
+    // build quat vectors for first quat mult
+    double* quatA    = new double[4];
+    double* quatB    = new double[4];
+    double* quat_AB  = new double[4];
+    double* quat_xyz = new double[4];
+    
+    quatA[0] = 0.0;
+    quatA[1] = u;
+    quatA[2] = v;
+    quatA[3] = w;
+
+    quatB[0] =  e0;
+    quatB[1] = -ex;
+    quatB[2] = -ey;
+    quatB[3] = -ez;
+
+    quat_mult(quatA, quatB, quat_AB);
+
+    quat_mult(&y[9], quat_AB, quat_xyz);
+
+    // take the last 3 components of quat_xyz as x, y and z (the first element is 0.0)
+    ans[6] = quat_xyz[1];
+    ans[7] = quat_xyz[2];
+    ans[8] = quat_xyz[3];
+
+    ans[9]  = 0.5*(-ex*p - ey*q - ez*r); // e0 dot
+    ans[10] = 0.5*( e0*p - ez*q + ey*r); // ex dot
+    ans[11] = 0.5*( ez*p + e0*q - ex*r); // ey dot
+    ans[12] = 0.5*(-ey*p + ex*q + e0*r); // ez dot
     
 }
 
-void arrow::arrow_rk4_2_4(double t0, double* y0, double dt, int size, double* ans)
+void arrow::arrow_rk4_3_9(double t0, double* y0, double dt, int size, double* ans)
 {
-    FILE* check_file = fopen("check.txt", "w");
-
-    //fprintf(check_file, "  Time[s]              u[ft/s]             v[ft/s]               w[ft/s]               p[rad/s]             q[rad/s]             r[rad/s]             x[ft]                y[ft]                z[ft]                phi[rad]             theta[rad]             psi[rad]\n");
+    // print first function calls in check file
+    FILE* check_file = fopen("check_3_9.txt", "w");
+    fprintf(check_file, "  Time[s]              udot                vdot                 wdot                  pdot               qdot                 rdot                 xdot                  ydot                 zdot                   e0dot                exdot               eydot              ezdot\n");
     
     double* dy = new double[size];
     // k1:
     arrow_rk4_func_3_9(t0, y0, dy);
-    //m_k1 = dy;
-    //fprintf(check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11]);
+    fprintf(check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11], dy[12]);
     
     // multiply k1 by dt 
     for (int i = 0; i < size; i++)
@@ -459,8 +483,7 @@ void arrow::arrow_rk4_2_4(double t0, double* y0, double dt, int size, double* an
 
     // k2:  
     arrow_rk4_func_3_9(t0 + (0.5 * dt), m_y_temp, dy);
-    //m_k2 = dy;
-    //fprintf(check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11]);
+    fprintf(check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11], dy[12]);
     
     // multiply k2 by dt and then update y_temp
     for (int i = 0; i < size; i++)
@@ -471,8 +494,7 @@ void arrow::arrow_rk4_2_4(double t0, double* y0, double dt, int size, double* an
     
     // k3:
     arrow_rk4_func_3_9(t0 + (0.5 * dt), m_y_temp, dy);
-    //m_k3 = dy;
-    //fprintf(check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11]);
+    fprintf(check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11], dy[12]);//fprintf(check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11]);
     
     // multiply k2 by dt and then update y_temp
     for (int i = 0; i < size; i++)
@@ -483,8 +505,8 @@ void arrow::arrow_rk4_2_4(double t0, double* y0, double dt, int size, double* an
     
     // k4:
     arrow_rk4_func_3_9(t0 + dt, m_y_temp, dy);
-    //m_k4 = dy;
-    //fprintf(check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11]);
+    fprintf(check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11], dy[12]);//fprintf(check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11]);
+    fclose(check_file);
     
     // multiply k4 by dt   
     for (int i = 0; i < size; i++)
@@ -495,18 +517,19 @@ void arrow::arrow_rk4_2_4(double t0, double* y0, double dt, int size, double* an
         ans[i] = y0[i] + (m_k1[i] + 2.0 * m_k2[i] + 2.0 * m_k3[i] + m_k4[i]) / 6.0  ;
     }
     
-    //fclose(check_file);
 }
 
 void arrow::exercise_3_9()
 {
     Atmosphere atm;
     
+    // print results in a file
     FILE* en_file = fopen("arrow_3_9.txt", "w");
-
-    fprintf(en_file, "  Time[s]              u[ft/s]             v[ft/s]               w[ft/s]               p[rad/s]             q[rad/s]             r[rad/s]             x[ft]                y[ft]                z[ft]                phi[rad]             theta[rad]             psi[rad]\n");
+    fprintf(en_file, "  Time[s]              u[ft/s]            v[ft/s]                w[ft/s]              p[rad/s]             q[rad/s]             r[rad/s]             x[ft]                y[ft]                z[ft]                e0                   ex                   ey                   ez\n");
+    
     double t0 = 0.0;
-    double* y0 = new double[12];
+    int size = 13;
+    double* y0 = new double[size];
     y0[0]  = m_init_V;         // u
     y0[1]  = 0.0;              // v
     y0[2]  = 0.0;              // w
@@ -519,21 +542,37 @@ void arrow::exercise_3_9()
     y0[9]  = 0.0;              // phi
     y0[10] = m_init_theta;     // theta
     y0[11] = 0.0;              // psi
-    
-    int size = 12;
-    double* y = new double[12];
+
+    // convert phi, theta, and psi to a quat
+    double* quat = new double[4];
+    euler_to_quat(&y0[9], quat);
+
+    // normalize the quat
+    quat_norm(quat);
+
+    // store the quat in y0
+    y0[9] = quat[0];
+    y0[10] = quat[1];
+    y0[11] = quat[2];
+    y0[12] = quat[3];
+
+    double* y = new double[13];
     
     do {
         arrow_rk4_3_9(t0, y0, m_time_step, size, y);
-        fprintf(en_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, y0[0], y0[1], y0[2],y0[3],y0[4], y0[5], y0[6], y0[7], y0[8], y0[9], y0[10], y0[11]);
-        //for (int i = 0; i<12; i++)
-            //{printf("%20.12e", y0[i]);}
-        array_copy(y, y0, size);
+        fprintf(en_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, y0[0], y0[1], y0[2],y0[3],y0[4], y0[5], y0[6], y0[7], y0[8], y0[9], y0[10], y0[11], y0[12]);
         
+        // y = y0 ( copy y0 into y)
+        array_copy(y, y0, size);
+
+        // re-normalize the quat
+        quat_norm(&y[9]);
+        
+        // add time step
         t0 += m_time_step;
-    } 
+    } while (-y0[8] > 0.0);
     //while (t0<0.005);
-    while (-y0[8] > 0.0);
+    
     
     fclose(en_file);
     
