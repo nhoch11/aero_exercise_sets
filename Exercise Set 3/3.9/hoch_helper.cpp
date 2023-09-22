@@ -198,12 +198,12 @@ void quat_norm(double* quat)
 
 void euler_to_quat(double* eul, double* quat)
 { // equation 11.7.8
-    double cphi2   = cos(eul[0]/2.0);
-    double ctheta2 = cos(eul[1]/2.0);
-    double cpsi2   = cos(eul[2]/2.0);
-    double sphi2   = sin(eul[0]/2.0);
-    double stheta2 = sin(eul[1]/2.0);
-    double spsi2   = sin(eul[2]/2.0);
+    double cphi2   = cos(0.5*eul[0]);
+    double ctheta2 = cos(0.5*eul[1]);
+    double cpsi2   = cos(0.5*eul[2]);
+    double sphi2   = sin(0.5*eul[0]);
+    double stheta2 = sin(0.5*eul[1]);
+    double spsi2   = sin(0.5*eul[2]);
     quat[0] = cphi2*ctheta2*cpsi2 + sphi2*stheta2*spsi2;
     quat[1] = sphi2*ctheta2*cpsi2 - cphi2*stheta2*spsi2;
     quat[2] = cphi2*stheta2*cpsi2 + sphi2*ctheta2*spsi2;
@@ -250,9 +250,9 @@ void body_to_fixed(double* vec, double* quat, double* ans)
     double ez = quat[3];
     // equation 11.5.6
 
-    ans[0] = (pow(ex,2.0) + pow(e0,2.0) - pow(ey,2.0) - pow(ez,2.0))*vxb + 2.0*(ex*ey - ez*e0)*vyb + 2.0*(ex*ez + ey*e0)*vzb; 
-    ans[1] = 2.0*(ex*ey + ez*e0)*vxb + (pow(ey,2.0) + pow(e0,2.0) - pow(ex,2.0) - pow(ez,2.0))*vyb + 2.0*(ey*ez - ex*e0)*vzb;
-    ans[2] = 2.0*(ex*ez - ey*e0)*vxb + 2.0*(ey*ez + ex*e0)*vyb + (pow(ez,2.0) + pow(e0,2.0) - pow(ex,2.0) - pow(ey,2.0))*vzb;
+    ans[0] = (ex*ex + e0*e0 - ey*ey - ez*ez)*vxb + 2.0*(ex*ey - ez*e0)*vyb + 2.0*(ex*ez + ey*e0)*vzb; 
+    ans[1] = 2.0*(ex*ey + ez*e0)*vxb + (ey*ey + e0*e0 - ex*ex - ez*ez)*vyb + 2.0*(ey*ez - ex*e0)*vzb;
+    ans[2] = 2.0*(ex*ez - ey*e0)*vxb + 2.0*(ey*ez + ex*e0)*vyb + (ez*ez + e0*e0 - ex*ex - ey*ey)*vzb;
 
 }
 
@@ -267,9 +267,9 @@ void fixed_to_body(double* vec, double* quat, double* ans)
     double ez = quat[3];
     // equation 11.5.5
 
-    ans[0] = (pow(ex,2.0) + pow(e0,2.0) - pow(ey,2.0) - pow(ez,2.0))*vxb + 2.0*(ex*ey + ez*e0)*vyb + 2.0*(ex*ez - ey*e0)*vzb; 
-    ans[1] = 2.0*(ex*ey - ez*e0)*vxb + (pow(ey,2.0) + pow(e0,2.0) - pow(ex,2.0) - pow(ez,2.0))*vyb + 2.0*(ey*ez + ex*e0)*vzb;
-    ans[2] = 2.0*(ex*ez + ey*e0)*vxb + 2.0*(ey*ez - ex*e0)*vyb + (pow(ez,2.0) + pow(e0,2.0) - pow(ex,2.0) - pow(ey,2.0))*vzb;
+    ans[0] = (ex*ex + e0*e0 - ey*ey - ez*ez)*vxb + 2.0*(ex*ey + ez*e0)*vyb + 2.0*(ex*ez - ey*e0)*vzb; 
+    ans[1] = 2.0*(ex*ey - ez*e0)*vxb + (ey*ey + e0*e0 - ex*ex - ez*ez)*vyb + 2.0*(ey*ez + ex*e0)*vzb;
+    ans[2] = 2.0*(ex*ez + ey*e0)*vxb + 2.0*(ey*ez - ex*e0)*vyb + (ez*ez + e0*e0 - ex*ex - ey*ey)*vzb;
 
 }
 
