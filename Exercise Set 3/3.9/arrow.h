@@ -14,6 +14,7 @@ public: // private variables and function can only be accessed inside the class
 
     void exercise_2_2();
     void exercise_2_4();
+    void exercise_3_9();
     
 private:
     
@@ -65,13 +66,17 @@ private:
     // double* m_dy;
 
     // functions;
-    void arrow_rk4_2_2(double t0, double* y0, double dt, int size, double* ans);
-    void arrow_rk4_func_2_2(double t, double*y, double* ans);
     void aerodynamics_2_2(double* y, double* ans);
+    void arrow_rk4_func_2_2(double t, double*y, double* ans);
+    void arrow_rk4_2_2(double t0, double* y0, double dt, int size, double* ans);
     
-    void arrow_rk4_2_4(double t0, double* y0, double dt, int size, double* ans);
-    void arrow_rk4_func_2_4(double t, double*y, double* ans);
     void aerodynamics_2_4(double* y, double* ans);
+    void arrow_rk4_func_2_4(double t, double*y, double* ans);
+    void arrow_rk4_2_4(double t0, double* y0, double dt, int size, double* ans);
+
+    void aerodynamics_3_9(double* y, double* ans);
+    void arrow_rk4_func_3_9(double t, double* y, double* ans);
+    void arrow_rk4_3_9(double t0, double* y0, double dt, int size, double* ans);
     
 
 };
