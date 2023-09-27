@@ -21,6 +21,7 @@ struct Atmosphere // Atmosphere container has these things in it
     double pressure;
     double density;
     double speed_of_sound;
+    double dynamic_viscosity;
 };
 
 

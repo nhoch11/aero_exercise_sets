@@ -3,15 +3,20 @@
 void get_atmospheric_properties_si(double altitude, Atmosphere& atm)
 {
     // declare constants and initialize variables
-    const double RE = 6356766.0; // meters
+    const double Radius_E = 6356766.0; // meters
     const double G0 = 9.806645; // m^2 /s
-    double Z = (RE*altitude)/(RE + altitude);
+    double Z = (Radius_E*altitude)/(Radius_E + altitude);
     double p; // pressure Pa
     double T; // Temperature K
     double rho = 0.0; // kg/m^3
     double a = 0.0; // m/s
     // standard sea level conditions
-    
+
+    // dynamic viscosity using sutherlands formula
+    double mu; // kg/(m*s)
+    double mu0 = 1.716e-5; // dynamic viscosity constant for Sutherlands Formula
+    double T0 = 273.15; //Kelvin for Sutherlands formula
+
     const double R = 287.0528; // Nm/kgK
     
     // store pre calculated temperatures and pressures at each layer boundary
@@ -24,6 +29,7 @@ void get_atmospheric_properties_si(double altitude, Atmosphere& atm)
     if (Z <= 11000.0){
         T = T_array[0] + T_prime[0]*(Z-Z_const[0]); // K
         p = p_array[0]*pow(((T_array[0] +T_prime[0]*(Z-Z_const[0]))/T_array[0]),(-G0/(R*T_prime[0])));
+        mu = mu0*pow(T/T0, 1.5)*((T0 + 110.4)/(T + 110.4)); // kg/(m*s)
     } 
     
     // second layer
@@ -32,7 +38,7 @@ void get_atmospheric_properties_si(double altitude, Atmosphere& atm)
         T = T_array[1] + T_prime[1]*(Z-Z_const[1]); // K
         // use the Ti prime = 0 equation
         p = p_array[1]*exp(-(G0*(Z-Z_const[1]))/(R*T_array[1])); // Pa
-    
+        mu = mu0*pow(T/T0, 1.5)*((T0 + 110.4)/(T + 110.4)); // kg/(m*s)
     } 
     
     // third layer
@@ -41,7 +47,7 @@ void get_atmospheric_properties_si(double altitude, Atmosphere& atm)
         T = T_array[2] + T_prime[2]*(Z-Z_const[2]); // K
         // use the Ti prime /= 0 equation
         p = p_array[2]*pow(((T_array[2] +T_prime[2]*(Z-Z_const[2]))/T_array[2]),(-G0/(R*T_prime[2])));
-        
+        mu = mu0*pow(T/T0, 1.5)*((T0 + 110.4)/(T + 110.4)); // kg/(m*s)
     } 
     
     //fourth layer
@@ -50,7 +56,7 @@ void get_atmospheric_properties_si(double altitude, Atmosphere& atm)
         T = T_array[3] + T_prime[3]*(Z-Z_const[3]); // K
         // use the Ti prime /= 0 equation
         p = p_array[3]*pow(((T_array[3] + T_prime[3]*(Z-Z_const[3]))/T_array[3]),(-G0/(R*T_prime[3])));
-        
+        mu = mu0*pow(T/T0, 1.5)*((T0 + 110.4)/(T + 110.4)); // kg/(m*s)
     } 
     
     // fifth layer
@@ -59,7 +65,7 @@ void get_atmospheric_properties_si(double altitude, Atmosphere& atm)
         T = T_array[4] + T_prime[4]*(Z-Z_const[4]); // K
         // use the Ti prime /= 0 equation
         p = p_array[4]*exp((-G0*(Z-Z_const[4]))/(R*T_array[4]));
-        
+        mu = mu0*pow(T/T0, 1.5)*((T0 + 110.4)/(T + 110.4)); // kg/(m*s)
     } 
     
     // sixth layer
@@ -68,7 +74,7 @@ void get_atmospheric_properties_si(double altitude, Atmosphere& atm)
         T = T_array[5] + T_prime[5]*(Z-Z_const[5]); // K
         // use the Ti prime /= 0 equation
         p = p_array[5]*pow(((T_array[5]  + T_prime[5]*(Z-Z_const[5]))/T_array[5] ),(-G0/(R*T_prime[5])));
-        
+        mu = mu0*pow(T/T0, 1.5)*((T0 + 110.4)/(T + 110.4)); // kg/(m*s)
     } 
     
     // seventh layer
@@ -77,7 +83,7 @@ void get_atmospheric_properties_si(double altitude, Atmosphere& atm)
         T = T_array[6] + T_prime[6]*(Z-Z_const[6]); // K
         // use the Ti prime /= 0 equation
         p = p_array[6]*pow(((T_array[6] + T_prime[6]*(Z-Z_const[6]))/ T_array[6]),(-G0/(R*T_prime[6])));
-        
+        mu = mu0*pow(T/T0, 1.5)*((T0 + 110.4)/(T + 110.4)); // kg/(m*s)
     }
     rho = p/(R*T);
     a = sqrt(1.4*R*T);
@@ -87,6 +93,7 @@ void get_atmospheric_properties_si(double altitude, Atmosphere& atm)
     atm.pressure = p;
     atm.density = rho;
     atm.speed_of_sound = a;
+    atm.dynamic_viscosity = mu; // kg/(m*s)
 }
 
 void get_atmospheric_properties_english(double altitude, Atmosphere& atm)
@@ -103,6 +110,8 @@ void get_atmospheric_properties_english(double altitude, Atmosphere& atm)
     atm.pressure = atm.pressure*0.020885434304801722; // Pa to lbf/ft^2
     atm.density = atm.density*0.00194032032363104; // kg/m^3 to slugs/ ft^3
     atm.speed_of_sound = atm.speed_of_sound/0.3048; // m/s to ft/s
+    atm.dynamic_viscosity = atm.dynamic_viscosity* 0.020885434225; // kg/(m*s) to slug/(ft*s)
+    std::cout << atm.dynamic_viscosity << std::endl;
     
 }
 
