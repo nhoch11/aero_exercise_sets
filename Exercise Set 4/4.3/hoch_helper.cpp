@@ -198,7 +198,7 @@ void quat_mult(double* A, double* B, double* ans)
 
 void quat_norm(double* quat)
 {   // equation 11.6.5
-    double magnitude = sqrt(pow(quat[0], 2) + pow(quat[1], 2) + pow(quat[2], 2) + pow(quat[3], 2));
+    double magnitude = sqrt(quat[0]*quat[0] + quat[1]*quat[1] + quat[2]*quat[2] + quat[3]*quat[3]);
     quat[0] /= magnitude;
     quat[1] /= magnitude;
     quat[2] /= magnitude;
@@ -242,9 +242,9 @@ void quat_to_euler(double* quat, double* eul)
 
     else
     {
-        eul[0] = atan2( 2.0*(e0*ex + ey*ez), pow(e0, 2.0) + pow(ez, 2.0) - pow(ex, 2.0) - pow(ey, 2.0));
+        eul[0] = atan2( 2.0*(e0*ex + ey*ez), e0*e0 + ez*ez - ex*ex - ey*ey);
         eul[1] = asin(2.0*(e0*ey - ex*ez));
-        eul[2] = atan2( 2.0*(e0*ez + ex*ey), pow(e0, 2.0) + pow(ex, 2.0) - pow(ey, 2.0) - pow(ez, 2.0));
+        eul[2] = atan2( 2.0*(e0*ez + ex*ey), e0*e0 + ex*ex - ey*ey - ez*ez);
     }
 }
 

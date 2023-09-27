@@ -17,7 +17,6 @@ cannonball::cannonball(string filename)
     m_weight = data["mass"]["weight[lbf]"];
     m_Ixx = data["mass"]["Ixx[slug*ft^2]"];
     m_Iyy = m_Ixx;
-    m_Izz = m_Ixx;
     m_CLa = data["aerodynamics"]["CL,a"];
     m_CD0 = data["aerodynamics"]["CD0"];
     m_CD2 = data["aerodynamics"]["CD2"];
@@ -86,7 +85,7 @@ void cannonball::cannonball_rk4_func(double t, double* y, double* ans)
 {
 
     double* FM = new double[6];
-    // update aerodynamic data(call aerodynamics_2_2)
+    // update aerodynamic data
     aerodynamics_cannonball(y, FM);
     double Fxb = FM[0];
     double Fyb = FM[1];
@@ -114,7 +113,7 @@ void cannonball::cannonball_rk4_func(double t, double* y, double* ans)
 
     ans[0]  = (g*Fxb/m_weight) + (g*2.0*(ex*ez - ey*e0)) + (r*v) - (q*w); // udot
     ans[1]  = (g*Fyb/m_weight) + (g*2.0*(ey*ez + ex*e0)) + (p*w) - (r*u); // vdot
-    ans[2]  = (g*Fzb/m_weight) + (g*(pow(ez,2.0) + pow(e0,2.0) - pow(ex,2.0) - pow(ey,2.0))) + (q*u) - (p*v); // wdot
+    ans[2]  = (g*Fzb/m_weight) + (g*(ez*ez + e0*e0 - ex*ex - ey*ey)) + (q*u) - (p*v); // wdot
     ans[3]  = (Mxb/m_Ixx); // pdot
     ans[4]  = (Myb + (m_Iyy - m_Ixx)*p*r)/m_Iyy; // qdot
     ans[5]  = (Mzb + (m_Ixx - m_Iyy)*p*q)/m_Iyy; // rdot
