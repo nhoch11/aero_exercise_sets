@@ -31,8 +31,22 @@ cannonball::cannonball(string filename)
 
 double cannonball::get_sphere_CD(double reynolds)
 {
+    int i = 1;
+    while (i<44 && reynolds > m_Re_points[i]){i++;}
 
+    // check if i reynolds input is out of range
+    if (i ==1 || i == 45);{return 0.0;}
+
+    // now we have the correct upper bound i,do linear interpolation
+    double x0 = m_Re_points[i-1];
+    double x1 = m_Re_points[i];
+    double y0 = m_cd_points[i-1];
+    double y1 = m_cd_points[i];
+
+    return y0 + ((reynolds - x0)/(x1 - x0))*(y1-y0);
 }
+
+
 
 void cannonball::aerodynamics_cannonball(double* y, double* ans)
 {
@@ -73,12 +87,12 @@ void cannonball::aerodynamics_cannonball(double* y, double* ans)
     double CD = get_sphere_CD(Re);
 
     // update forces and moments
-    ans[0] = -0.5*rho*pow(V,2)*m_ref_area*CD; // F_xb
+    ans[0] = -0.5*rho*pow(V,2)*m_ref_area*CD*cos(alpha)*cos(beta); // F_xb
     ans[1] =  0.0; //-0.5*rho*pow(V,2)*m_ref_area*CS; // F_yb
     ans[2] =  0.0; //-0.5*rho*pow(V,2)*m_ref_area*CL; // F_zb
-    ans[3] =  0.5*rho*pow(V,2)*m_ref_area*m_ref_length*Cl; // M_xb
-    ans[4] =  0.5*rho*pow(V,2)*m_ref_area*m_ref_length*Cm; // M_yb
-    ans[5] =  0.5*rho*pow(V,2)*m_ref_area*m_ref_length*Cn; // M_zb
+    ans[3] =  0.0; // 0.5*rho*pow(V,2)*m_ref_area*m_ref_length*Cl; // M_xb
+    ans[4] =  0.0; // 0.5*rho*pow(V,2)*m_ref_area*m_ref_length*Cm; // M_yb
+    ans[5] =  0.0; // 0.5*rho*pow(V,2)*m_ref_area*m_ref_length*Cn; // M_zb
 }
 
 void cannonball::cannonball_rk4_func(double t, double* y, double* ans)
@@ -153,7 +167,7 @@ void cannonball::cannonball_rk4_func(double t, double* y, double* ans)
 void cannonball::cannonball_rk4(double t0, double* y0, double dt, int size, double* ans)
 {
     // print first function calls in check file
-    FILE* check_file = fopen("check_3_9.txt", "w");
+    FILE* check_file = fopen("check_4_3.txt", "w");
     fprintf(check_file, "  Time[s]              udot                vdot                 wdot                  pdot               qdot                 rdot                 xdot                  ydot                 zdot                   e0dot                exdot               eydot              ezdot\n");
     
     double* dy = new double[size];

@@ -29,7 +29,7 @@ void get_atmospheric_properties_si(double altitude, Atmosphere& atm)
     if (Z <= 11000.0){
         T = T_array[0] + T_prime[0]*(Z-Z_const[0]); // K
         p = p_array[0]*pow(((T_array[0] +T_prime[0]*(Z-Z_const[0]))/T_array[0]),(-G0/(R*T_prime[0])));
-        mu = mu0*pow(T/T0, 1.5)*((T0 + 110.4)/(T + 110.4)); // kg/(m*s)
+        
     } 
     
     // second layer
@@ -38,7 +38,7 @@ void get_atmospheric_properties_si(double altitude, Atmosphere& atm)
         T = T_array[1] + T_prime[1]*(Z-Z_const[1]); // K
         // use the Ti prime = 0 equation
         p = p_array[1]*exp(-(G0*(Z-Z_const[1]))/(R*T_array[1])); // Pa
-        mu = mu0*pow(T/T0, 1.5)*((T0 + 110.4)/(T + 110.4)); // kg/(m*s)
+        
     } 
     
     // third layer
@@ -47,7 +47,7 @@ void get_atmospheric_properties_si(double altitude, Atmosphere& atm)
         T = T_array[2] + T_prime[2]*(Z-Z_const[2]); // K
         // use the Ti prime /= 0 equation
         p = p_array[2]*pow(((T_array[2] +T_prime[2]*(Z-Z_const[2]))/T_array[2]),(-G0/(R*T_prime[2])));
-        mu = mu0*pow(T/T0, 1.5)*((T0 + 110.4)/(T + 110.4)); // kg/(m*s)
+        
     } 
     
     //fourth layer
@@ -56,7 +56,7 @@ void get_atmospheric_properties_si(double altitude, Atmosphere& atm)
         T = T_array[3] + T_prime[3]*(Z-Z_const[3]); // K
         // use the Ti prime /= 0 equation
         p = p_array[3]*pow(((T_array[3] + T_prime[3]*(Z-Z_const[3]))/T_array[3]),(-G0/(R*T_prime[3])));
-        mu = mu0*pow(T/T0, 1.5)*((T0 + 110.4)/(T + 110.4)); // kg/(m*s)
+        
     } 
     
     // fifth layer
@@ -65,7 +65,7 @@ void get_atmospheric_properties_si(double altitude, Atmosphere& atm)
         T = T_array[4] + T_prime[4]*(Z-Z_const[4]); // K
         // use the Ti prime /= 0 equation
         p = p_array[4]*exp((-G0*(Z-Z_const[4]))/(R*T_array[4]));
-        mu = mu0*pow(T/T0, 1.5)*((T0 + 110.4)/(T + 110.4)); // kg/(m*s)
+        
     } 
     
     // sixth layer
@@ -74,7 +74,7 @@ void get_atmospheric_properties_si(double altitude, Atmosphere& atm)
         T = T_array[5] + T_prime[5]*(Z-Z_const[5]); // K
         // use the Ti prime /= 0 equation
         p = p_array[5]*pow(((T_array[5]  + T_prime[5]*(Z-Z_const[5]))/T_array[5] ),(-G0/(R*T_prime[5])));
-        mu = mu0*pow(T/T0, 1.5)*((T0 + 110.4)/(T + 110.4)); // kg/(m*s)
+
     } 
     
     // seventh layer
@@ -83,11 +83,12 @@ void get_atmospheric_properties_si(double altitude, Atmosphere& atm)
         T = T_array[6] + T_prime[6]*(Z-Z_const[6]); // K
         // use the Ti prime /= 0 equation
         p = p_array[6]*pow(((T_array[6] + T_prime[6]*(Z-Z_const[6]))/ T_array[6]),(-G0/(R*T_prime[6])));
-        mu = mu0*pow(T/T0, 1.5)*((T0 + 110.4)/(T + 110.4)); // kg/(m*s)
+        
     }
     rho = p/(R*T);
     a = sqrt(1.4*R*T);
-
+    mu = mu0*pow(T/T0, 1.5)*((T0 + 110.4)/(T + 110.4)); // kg/(m*s)
+    
     atm.geopotential_altitude = Z;
     atm.temperature = T;
     atm.pressure = p;
