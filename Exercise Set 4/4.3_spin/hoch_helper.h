@@ -6,6 +6,7 @@
 #include <iomanip>
 #include <fstream>
 #include "json.hpp"
+#include <random>
 
 using namespace std; // use standard or 'std' namespace
 using json = nlohmann::json;
@@ -52,5 +53,8 @@ double gravity_si(double H);
 double gravity_english(double H);
 
 double* cross(double x1, double y1, double z1, double x2, double y2, double z2);
+
+double random_float(double min, double max);
+
 
 #endif

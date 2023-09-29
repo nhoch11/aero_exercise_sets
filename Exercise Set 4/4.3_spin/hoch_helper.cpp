@@ -323,3 +323,16 @@ double* cross(double x1, double y1, double z1, double x2, double y2, double z2)
     
     return result;
 }
+
+double random_float(double min, double max)
+{
+    // seed the random number generator with current time
+    random_device rd;
+    mt19937 gen(rd());
+    // define range for random float
+    uniform_real_distribution<double> distribution(min, max);
+
+    // generate random number
+    double rand_float = distribution(gen);
+    return rand_float;
+}

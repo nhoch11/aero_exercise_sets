@@ -14,9 +14,15 @@ cannonball::cannonball(string filename)
     m_init_altitude = data["initial"]["altitude[ft]"];
     double theta_deg = data["initial"]["elevation_angle[deg]"];
 
+    double random_spin = data["initial"]["max_random_spin[rad/s]"];
+    if (random_spin != 0.0){
+        m_p_initial = random_float(-random_spin, random_spin);
+        m_q_initial = random_float(-random_spin, random_spin);
+        m_r_initial = random_float(-random_spin, random_spin);}
+    else{
     m_p_initial = data["initial"]["initial_p[rad/s]"];
     m_q_initial = data["initial"]["initial_q[rad/s]"];
-    m_r_initial = data["initial"]["initial_r[rad/s]"];
+    m_r_initial = data["initial"]["initial_r[rad/s]"];}
 
     m_init_theta = (theta_deg*pi)/180.0;
     m_weight = data["mass"]["weight[lbf]"];

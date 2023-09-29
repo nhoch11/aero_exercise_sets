@@ -12,9 +12,11 @@
         "airspeed[ft/s]" : 400.0,
         "altitude[ft]" : 5.0,
         "elevation_angle[deg]" : 5.0,
-        "initial_p[rad/s]" : 0.0,
+        "initial_p[rad/s]" : 25.0,
         "initial_q[rad/s]" : 50.0,
-        "initial_r[rad/s]" : 0.0
+        "initial_r[rad/s]" : 0.0,
+        "max_random_spin[rad/s]": 40.0
+
     },
 
     "mass" : {
