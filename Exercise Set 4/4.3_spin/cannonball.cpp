@@ -13,6 +13,11 @@ cannonball::cannonball(string filename)
     m_init_V = data["initial"]["airspeed[ft/s]"];
     m_init_altitude = data["initial"]["altitude[ft]"];
     double theta_deg = data["initial"]["elevation_angle[deg]"];
+
+    m_p_initial = data["initial"]["initial_p[rad/s]"];
+    m_q_initial = data["initial"]["initial_q[rad/s]"];
+    m_r_initial = data["initial"]["initial_r[rad/s]"];
+
     m_init_theta = (theta_deg*pi)/180.0;
     m_weight = data["mass"]["weight[lbf]"];
     m_Ixx = data["mass"]["Ixx[slug*ft^2]"];
@@ -86,10 +91,15 @@ void cannonball::aerodynamics_cannonball(double* y, double* ans)
     // get drag of a sphere
     double CD = get_sphere_CD(Re);
 
+    double* lift_vec = cross(u,v,w, p,q,r);
+    double spin_lift       = 0.15*(4/3)*4*pi*pi*m_ref_length*m_ref_length*m_ref_length*rho*lift_vec[2];
+    double spin_side_force = 0.15*(4/3)*4*pi*pi*m_ref_length*m_ref_length*m_ref_length*rho*lift_vec[1];
+    double spin_drag       = 0.15*(4/3)*4*pi*pi*m_ref_length*m_ref_length*m_ref_length*rho*lift_vec[0];
+
     // update forces and moments
-    ans[0] = -0.5*rho*pow(V,2)*m_ref_area*CD*cos(alpha)*cos(beta); // F_xb
-    ans[1] = -0.5*rho*pow(V,2)*m_ref_area*CD*sin(beta); // F_yb
-    ans[2] = -0.5*rho*pow(V,2)*m_ref_area*CD*sin(alpha)*cos(beta); // F_zb
+    ans[0] =  spin_drag*sin(alpha) - 0.5*rho*pow(V,2)*m_ref_area*CD*cos(alpha)*cos(beta); // F_xb
+    ans[1] =  spin_side_force*cos(beta) - 0.5*rho*pow(V,2)*m_ref_area*CD*sin(beta); // F_yb
+    ans[2] = -spin_lift*cos(alpha) - 0.5*rho*pow(V,2)*m_ref_area*CD*sin(alpha)*cos(beta); // F_zb
     ans[3] =  0.0; // 0.5*rho*pow(V,2)*m_ref_area*m_ref_length*Cl; // M_xb
     ans[4] =  0.0; // 0.5*rho*pow(V,2)*m_ref_area*m_ref_length*Cm; // M_yb
     ans[5] =  0.0; // 0.5*rho*pow(V,2)*m_ref_area*m_ref_length*Cn; // M_zb
@@ -235,9 +245,9 @@ void cannonball::exercise_4_3()
     y0[0]  = m_init_V;         // u
     y0[1]  = 0.0;              // v
     y0[2]  = 0.0;              // w
-    y0[3]  = 0.0;              // p
-    y0[4]  = 0.0;              // q
-    y0[5]  = 0.0;              // r
+    y0[3]  = m_p_initial;      // p
+    y0[4]  = m_q_initial;      // q
+    y0[5]  = m_r_initial;      // r
     y0[6]  = 0.0;              // xf
     y0[7]  = 0.0;              // yf
     y0[8]  = -m_init_altitude; // zf
