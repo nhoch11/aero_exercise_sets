@@ -4,14 +4,14 @@
     },
     
     "reference" : {
-        "area[ft^2]" : 0.08726646259,
+        "area[ft^2]" : 0.08766240,
         "length[ft]" : 0.333333
     },
     
     "initial" : {
-        "airspeed[ft/s]" : 500.0,
-        "altitude[ft]" : 5.0,
-        "elevation_angle[deg]" : 5.0
+        "airspeed[ft/s]" : 10.0,
+        "altitude[ft]" : 50000.0,
+        "elevation_angle[deg]" : 0.0
     },
 
     "mass" : {

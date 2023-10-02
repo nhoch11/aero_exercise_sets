@@ -5,11 +5,11 @@ int main (int argc, char * const argv[])
 {
     cout<<"Program started: "<<endl;
 
-    cannonball* my_cannonball = new cannonball("cannonball.json");
+    cannonball* my_cannonball = new cannonball("12_pounder.json");
 
     my_cannonball->exercise_4_3();
 
-
+    
     cout<<"Program completed: "<<endl;
 
     return 0;

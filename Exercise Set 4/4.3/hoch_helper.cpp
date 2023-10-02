@@ -112,7 +112,7 @@ void get_atmospheric_properties_english(double altitude, Atmosphere& atm)
     atm.density = atm.density*0.00194032032363104; // kg/m^3 to slugs/ ft^3
     atm.speed_of_sound = atm.speed_of_sound/0.3048; // m/s to ft/s
     atm.dynamic_viscosity = atm.dynamic_viscosity* 0.020885434225; // kg/(m*s) to slug/(ft*s)
-    std::cout << atm.dynamic_viscosity << std::endl;
+
     
 }
 
@@ -312,5 +312,15 @@ double gravity_english(double H)
     double g = gravity_si(H)*3.28083989501312 ;
 
     return g;
+}
+
+double* cross(double x1, double y1, double z1, double x2, double y2, double z2)
+{
+    double* result = new double [3];
+    result[0] = y1*z2 - z1*y2;
+    result[1] = z1*x2 - x1*z2;
+    result[2] = x1*y2 - y1*x2;
+    
+    return result;
 }
 

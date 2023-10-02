@@ -1,0 +1,29 @@
+% define filename
+text_file = 'cannonball.txt';
+
+% Extract coordinates
+data = importdata(text_file, ' ', 1);
+
+time =  data.data(:,1);
+
+u =  data.data(:,2);
+v =  data.data(:,3);
+w =  data.data(:,4);
+hold on;
+
+% create 3D scatter plot with specified marker face colors
+scatter(time, u, 'b', 'filled', 'MarkerFaceColor', 'b');
+scatter(time, v, 'r', 'filled', 'MarkerFaceColor', 'r');
+scatter(time, w, 'g', 'filled', 'MarkerFaceColor', 'g');
+
+% edit plot labels
+title('Cannonball velocity');
+xlabel('time [s]');
+ylabel('velocity [ft/s]');
+
+legend('u', 'v', 'w', 'location', 'northeast')
+
+hold off;
+
+% Show plot
+grid on;

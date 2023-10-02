@@ -35,7 +35,7 @@ double cannonball::get_sphere_CD(double reynolds)
     while (i<44 && reynolds > m_Re_points[i]){i++;}
 
     // check if i reynolds input is out of range
-    if (i ==1 || i == 45);{return 0.0;}
+    if (reynolds>m_Re_points[43]);{return 0.32;}
 
     // now we have the correct upper bound i,do linear interpolation
     double x0 = m_Re_points[i-1];
@@ -43,7 +43,9 @@ double cannonball::get_sphere_CD(double reynolds)
     double y0 = m_cd_points[i-1];
     double y1 = m_cd_points[i];
 
-    return y0 + ((reynolds - x0)/(x1 - x0))*(y1-y0);
+    double result = y0 + ((reynolds - x0)/(x1 - x0))*(y1-y0);
+    return result; 
+    
 }
 
 
@@ -67,6 +69,7 @@ void cannonball::aerodynamics_cannonball(double* y, double* ans)
     // calculate alpha, V
     double alpha  = atan2(w, u);
     double beta = atan2(v,u);
+    
     double V = sqrt(pow(u,2) + pow(v,2) + pow(w,2));
 
     // calculate CL, CD, and Cm
@@ -85,11 +88,10 @@ void cannonball::aerodynamics_cannonball(double* y, double* ans)
 
     // get drag of a sphere
     double CD = get_sphere_CD(Re);
-
     // update forces and moments
-    ans[0] = -0.5*rho*pow(V,2)*m_ref_area*CD*cos(alpha)*cos(beta); // F_xb
-    ans[1] = -0.5*rho*pow(V,2)*m_ref_area*CD*sin(beta); // F_yb
-    ans[2] = -0.5*rho*pow(V,2)*m_ref_area*CD*sin(alpha)*cos(beta); // F_zb
+    ans[0] =  - 0.5*rho*pow(V,2)*m_ref_area*CD*cos(alpha)*cos(beta); // F_xb
+    ans[1] =  - 0.5*rho*pow(V,2)*m_ref_area*CD*sin(beta); // F_yb
+    ans[2] =  -0.5*rho*pow(V,2)*m_ref_area*CD*sin(alpha)*cos(beta); // F_zb
     ans[3] =  0.0; // 0.5*rho*pow(V,2)*m_ref_area*m_ref_length*Cl; // M_xb
     ans[4] =  0.0; // 0.5*rho*pow(V,2)*m_ref_area*m_ref_length*Cm; // M_yb
     ans[5] =  0.0; // 0.5*rho*pow(V,2)*m_ref_area*m_ref_length*Cn; // M_zb
@@ -262,6 +264,7 @@ void cannonball::exercise_4_3()
     
     do {
         cannonball_rk4(t0, y0, m_time_step, size, y);
+        
         fprintf(en_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, y0[0], y0[1], y0[2],y0[3],y0[4], y0[5], y0[6], y0[7], y0[8], y0[9], y0[10], y0[11], y0[12]);
         
         // y = y0 ( copy y0 into y)
@@ -274,7 +277,6 @@ void cannonball::exercise_4_3()
         t0 += m_time_step;
     } while (-y0[8] > 0.0);
     //while (t0<0.005);
-    
     
     fclose(en_file);
     
