@@ -1,5 +1,6 @@
 % define filename
-text_file = 'cannonball.txt';
+text_file = 'cannon_ball_baby.txt';
+%text_file = 'cannonball.txt';
 
 % Extract coordinates
 data = importdata(text_file, ' ', 1);

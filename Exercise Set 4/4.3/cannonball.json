@@ -9,15 +9,15 @@
     },
     
     "initial" : {
-        "airspeed[ft/s]" : 10.0,
-        "altitude[ft]" : 50000.0,
+        "airspeed[ft/s]" : 100.0,
+        "altitude[ft]" : 15000.0,
         "elevation_angle[deg]" : 0.0
     },
 
     "mass" : {
-        "weight[lbf]" : 8.71694998,
+        "weight[lbf]" : 9.0,
         "Ixx[slug*ft^2]" : 0.0030103454,
-        "Iyy[slug*ft^2]" : 0.00097
+        "Iyy[slug*ft^2]" : 0.0030103454
     },
     
     "aerodynamics" : {
