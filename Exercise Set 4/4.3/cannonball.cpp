@@ -124,6 +124,7 @@ void cannonball::cannonball_rk4_func(double t, double* y, double* ans)
     double ez = y[12];
 
     double g = gravity_english(-zf);
+    cout<<setprecision(8)<< g<<endl;
 
     ans[0]  = (g*Fxb/m_weight) + (g*2.0*(ex*ez - ey*e0)) + (r*v) - (q*w); // udot
     ans[1]  = (g*Fyb/m_weight) + (g*2.0*(ey*ez + ex*e0)) + (p*w) - (r*u); // vdot
