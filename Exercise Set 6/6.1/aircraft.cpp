@@ -1,59 +1,97 @@
-#include "f_16.h"
+#include "aircraft.h"
 
 // update aerodynamic coeifficint calcs in aerodynamics
 // then update forces in func function
 
 
-f_16::f_16(string filename)
+aircraft::aircraft(string filename)
 {
     std::ifstream f(filename);
     json data = json::parse(f);
     
     // read in json data and assign to existing class attributes
-    m_time_step = data["simulation"]["time_step[s]"];
-    m_ref_area = data["reference"]["area[ft^2]"];
-    m_ref_length = data["reference"]["length[ft]"];
-    m_init_V = data["initial"]["airspeed[ft/s]"];
-    m_init_altitude = data["initial"]["altitude[ft]"];
-    double theta_deg = data["initial"]["elevation_angle[deg]"];
-    m_init_theta = (theta_deg*pi)/180.0;
-    m_weight = data["mass"]["weight[lbf]"];
-    m_Ixx = data["mass"]["Ixx[slug*ft^2]"];
-    m_Iyy = m_Ixx;
-    m_CLa = data["aerodynamics"]["CL,a"];
-    m_CD0 = data["aerodynamics"]["CD0"];
-    m_CD2 = data["aerodynamics"]["CD2"];
-    m_Cma = data["aerodynamics"]["Cm,a"];
-    m_Cmq = data["aerodynamics"]["Cm,q"];
-    m_Clp = data["aerodynamics"]["Cl,p"];
-    m_Cl0 = data["aerodynamics"]["Cl0"];
     
+    // simulation
+    m_time_step = data["simulation"]["time_step[sec]"];
+    m_total_time = data["simulation"]["total_time[sec]"];
+
+    // aircraft
+    m_wing_area = data["aircraft"]["wing_area[ft^2]"];
+    m_wing_span = data["aircraft"]["wing_span[ft]"];
+    m_weight = data["aircraft"]["weight[lbf]"];
+    m_Ixx = data["aircraft"]["Ixx[slug-ft^2]"];
+    m_Iyy = data["aircraft"]["Iyy[slug-ft^2]"];
+    m_Izz = data["aircraft"]["Izz[slug-ft^2]"];
+    m_Ixy = data["aircraft"]["Ixy[slug-ft^2]"];
+    m_Ixz = data["aircraft"]["Ixz[slug-ft^2]"];
+    m_Iyz = data["aircraft"]["Iyz[slug-ft^2]"];
+    m_hx = data["aircraft"]["hx[slug-ft^2/s]"];
+    m_hy = data["aircraft"]["hy[slug-ft^2/s]"];
+    m_hz = data["aircraft"]["hz[slug-ft^2/s]"];
+    m_cg_shift = data["aircraft"]["CG-shift[ft]"];
+    // put thrust stuff here
+    m_T0 = data["aircraft"]["thrust"]["T0[lbf]"];
+    m_T1 = data["aircraft"]["thrust"]["T1[lbf-s/ft]"];
+    m_T2 = data["aircraft"]["thrust"]["T2[lbf-s^2/ft^2]"];
+    m_a = data["aircraft"]["thrust"]["a"];
+
+    // initial state
+    m_V = data["initial"]["airspeed[ft/s]"];
+    m_altitude = data["initial"]["altitude[ft]"];
+    m_elv = data["initial"]["elevation_angle[deg]"]*180.0/pi;
+    m_bank = data["initial"]["bank_angle[deg]"]*180.0/pi;
+    m_alpha = data["initial"]["alpha[deg]"]*180.0/pi;
+    m_beta = data["initial"]["beta[deg]"]*180.0/pi;
+    m_p = data["initial"]["p[deg/s]"];
+    m_q = data["initial"]["q[deg/s]"];
+    m_r = data["initial"]["r[deg/s]"];
+    m_heading = data["initial"]["heading_angle[deg]"]*180.0/pi;
+    m_aileron = data["initial"]["aileron[deg]"]*180.0/pi;
+    m_elevator = data["initial"]["elevator[deg]"]*180.0/pi;
+    m_rudder = data["initial"]["rudder[deg]"]*180.0/pi;
+    m_throttle = data["initial"]["throttle"];
+
+    // aerodynamics
+    m_CL0 = data["aerodynamics"]["CL0"];
+    m_CL_a = data["aerodynamics"]["CL,a"];
+    m_CL_qbar = data["aerodynamics"]["CL,qbar"];
+    m_CL_de = data["aerodynamics"]["CL,de"];
+    m_CS_b = data["aerodynamics"]["CS,b"];
+    m_CS_pbar = data["aerodynamics"]["CS,pbar"];
+    m_CS_rbar = data["aerodynamics"]["CS,rbar"];
+    m_CS_da = data["aerodynamics"]["CS,da"];
+    m_CS_dr = data["aerodynamics"]["CS,dr"];
+    m_CDL0 = data["aerodynamics"]["CDL0"];
+    m_CD_L = data["aerodynamics"]["CD,L"];
+    m_CD_L2 = data["aerodynamics"]["CD,L2"];
+    m_CD_S2 = data["aerodynamics"]["CD,S2"];
+    m_CD_qbar = data["aerodynamics"]["CD,qbar"];
+    m_CD_Lqbar = data["aerodynamics"]["CD,Lqbar"];
+    m_CD_de = data["aerodynamics"]["CD,de"];
+    m_CD_Lde = data["aerodynamics"]["CD,Lde"];
+    m_CD_de2 = data["aerodynamics"]["CD,de2"];
+    m_Cl_b = data["aerodynamics"]["Cl,b"];
+    m_Cl_pbar = data["aerodynamics"]["Cl,pbar"];
+    m_Cl_rbar = data["aerodynamics"]["Cl,rbar"];
+    m_Cl_Lrbar = data["aerodynamics"]["Cl,Lrbar"];
+    m_Cl_da = data["aerodynamics"]["Cl,da"];
+    m_Cl_dr = data["aerodynamics"]["Cl,dr"];
+    m_Cm0 = data["aerodynamics"]["Cm0"];
+    m_Cm_a = data["aerodynamics"]["Cm,a"];
+    m_Cm_qbar = data["aerodynamics"]["Cm,qbar"];
+    m_Cm_de = data["aerodynamics"]["Cm,de"];
+    m_Cn_b = data["aerodynamics"]["Cn,b"];
+    m_Cn_pbar = data["aerodynamics"]["Cn,pbar"];
+    m_Cn_Lpbar = data["aerodynamics"]["Cn,Lpbar"];
+    m_Cn_rbar = data["aerodynamics"]["Cn,rbar"];
+    m_Cn_da = data["aerodynamics"]["Cn,da"];
+    m_Cn_Lda = data["aerodynamics"]["Cn,Lda"];
+    m_Cn_dr = data["aerodynamics"]["Cn,dr"];
     
 }
 
 
-double f_16::get_sphere_CD(double reynolds)
-{
-    int i = 1;
-    while (i<44 && reynolds > m_Re_points[i]){i++;}
-
-    // check if i reynolds input is out of range
-    if (reynolds>m_Re_points[43]);{return 0.32;}
-
-    // now we have the correct upper bound i,do linear interpolation
-    double x0 = m_Re_points[i];
-    double x1 = m_Re_points[i+1];
-    double y0 = m_cd_points[i];
-    double y1 = m_cd_points[i+1];
-
-    double result = y0 + ((y1-y0)/(x1 - x0))*(reynolds-x1);
-    return result; 
-    
-}
-
-
-
-void f_16::aerodynamics_f_16(double* y, double* ans)
+void aircraft::aerodynamics_aircraft(double* y, double* ans)
 {
     // make dummy variables for readibility
     double u  = y[0];
@@ -100,12 +138,12 @@ void f_16::aerodynamics_f_16(double* y, double* ans)
     ans[5] =  0.0; // 0.5*rho*pow(V,2)*m_ref_area*m_ref_length*Cn; // M_zb
 }
 
-void f_16::f_16_rk4_func(double t, double* y, double* ans)
+void aircraft::aircraft_rk4_func(double t, double* y, double* ans)
 {
 
     double* FM = new double[6];
     // update aerodynamic data
-    aerodynamics_f_16(y, FM);
+    aerodynamics_aircraft(y, FM);
     double Fxb = FM[0];
     double Fyb = FM[1];
     double Fzb = FM[2];
@@ -169,7 +207,7 @@ void f_16::f_16_rk4_func(double t, double* y, double* ans)
     
 }
 
-void f_16::f_16_rk4(double t0, double* y0, double dt, int size, double* ans)
+void aircraft::aircraft_rk4(double t0, double* y0, double dt, int size, double* ans)
 {
     // print first function calls in check file
     FILE* check_file = fopen("check_4_3.txt", "w");
@@ -177,7 +215,7 @@ void f_16::f_16_rk4(double t0, double* y0, double dt, int size, double* ans)
     
     double* dy = new double[size];
     // k1:
-    f_16_rk4_func(t0, y0, dy);
+    aircraft_rk4_func(t0, y0, dy);
     fprintf(check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11], dy[12]);
     
     // multiply k1 by dt 
@@ -189,7 +227,7 @@ void f_16::f_16_rk4(double t0, double* y0, double dt, int size, double* ans)
     }
 
     // k2:  
-    f_16_rk4_func(t0 + (0.5 * dt), m_y_temp, dy);
+    aircraft_rk4_func(t0 + (0.5 * dt), m_y_temp, dy);
     fprintf(check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11], dy[12]);
     
     // multiply k2 by dt and then update y_temp
@@ -200,7 +238,7 @@ void f_16::f_16_rk4(double t0, double* y0, double dt, int size, double* ans)
     }
     
     // k3:
-    f_16_rk4_func(t0 + (0.5 * dt), m_y_temp, dy);
+    aircraft_rk4_func(t0 + (0.5 * dt), m_y_temp, dy);
     fprintf(check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11], dy[12]);//fprintf(check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11]);
     
     // multiply k2 by dt and then update y_temp
@@ -211,7 +249,7 @@ void f_16::f_16_rk4(double t0, double* y0, double dt, int size, double* ans)
     }
     
     // k4:
-    f_16_rk4_func(t0 + dt, m_y_temp, dy);
+    aircraft_rk4_func(t0 + dt, m_y_temp, dy);
     fprintf(check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11], dy[12]);//fprintf(check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11]);
     fclose(check_file);
     
@@ -226,12 +264,13 @@ void f_16::f_16_rk4(double t0, double* y0, double dt, int size, double* ans)
     
 }
 
-void f_16::exercise_4_3()
+
+void aircraft::init_sim()
 {
     Atmosphere atm;
     
     // print results in a file
-    FILE* en_file = fopen("f_16.txt", "w");
+    FILE* en_file = fopen("aircraft.txt", "w");
     fprintf(en_file, "  Time[s]              u[ft/s]            v[ft/s]                w[ft/s]              p[rad/s]             q[rad/s]             r[rad/s]             x[ft]                y[ft]                z[ft]                e0                   ex                   ey                   ez\n");
     
     double t0 = 0.0;
@@ -264,9 +303,13 @@ void f_16::exercise_4_3()
     y0[12] = quat[3];
 
     double* y = new double[13];
+}
+
+void aircraft::exercise_6_1()
+{
     
     do {
-        f_16_rk4(t0, y0, m_time_step, size, y);
+        aircraft_rk4(t0, y0, m_time_step, size, y);
         
         fprintf(en_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, y0[0], y0[1], y0[2],y0[3],y0[4], y0[5], y0[6], y0[7], y0[8], y0[9], y0[10], y0[11], y0[12]);
         

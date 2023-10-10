@@ -1,13 +1,13 @@
 //#include "hoch_helper.h"
-#include "cannonball.h"
+#include "aircraft.h"
 
 int main (int argc, char * const argv[])
 {
     cout<<"Program started: "<<endl;
 
-    cannonball* my_cannonball = new cannonball("cannonball.json");
+    aircraft* my_aircraft = new aircraft("f_16.json");
 
-    my_cannonball->exercise_4_3();
+    my_aircraft->exercise_6_1();
 
     
     cout<<"Program completed: "<<endl;
