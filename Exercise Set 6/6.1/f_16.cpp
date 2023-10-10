@@ -1,7 +1,10 @@
-#include "cannonball.h"
+#include "f_16.h"
+
+// update aerodynamic coeifficint calcs in aerodynamics
+// then update forces in func function
 
 
-cannonball::cannonball(string filename)
+f_16::f_16(string filename)
 {
     std::ifstream f(filename);
     json data = json::parse(f);
@@ -29,7 +32,7 @@ cannonball::cannonball(string filename)
 }
 
 
-double cannonball::get_sphere_CD(double reynolds)
+double f_16::get_sphere_CD(double reynolds)
 {
     int i = 1;
     while (i<44 && reynolds > m_Re_points[i]){i++;}
@@ -50,7 +53,7 @@ double cannonball::get_sphere_CD(double reynolds)
 
 
 
-void cannonball::aerodynamics_cannonball(double* y, double* ans)
+void f_16::aerodynamics_f_16(double* y, double* ans)
 {
     // make dummy variables for readibility
     double u  = y[0];
@@ -97,12 +100,12 @@ void cannonball::aerodynamics_cannonball(double* y, double* ans)
     ans[5] =  0.0; // 0.5*rho*pow(V,2)*m_ref_area*m_ref_length*Cn; // M_zb
 }
 
-void cannonball::cannonball_rk4_func(double t, double* y, double* ans)
+void f_16::f_16_rk4_func(double t, double* y, double* ans)
 {
 
     double* FM = new double[6];
     // update aerodynamic data
-    aerodynamics_cannonball(y, FM);
+    aerodynamics_f_16(y, FM);
     double Fxb = FM[0];
     double Fyb = FM[1];
     double Fzb = FM[2];
@@ -126,7 +129,6 @@ void cannonball::cannonball_rk4_func(double t, double* y, double* ans)
     double ez = y[12];
 
     double g = gravity_english(-zf);
-    cout<<setprecision(8)<< g<<endl;
 
     ans[0]  = (g*Fxb/m_weight) + (g*2.0*(ex*ez - ey*e0)) + (r*v) - (q*w); // udot
     ans[1]  = (g*Fyb/m_weight) + (g*2.0*(ey*ez + ex*e0)) + (p*w) - (r*u); // vdot
@@ -167,7 +169,7 @@ void cannonball::cannonball_rk4_func(double t, double* y, double* ans)
     
 }
 
-void cannonball::cannonball_rk4(double t0, double* y0, double dt, int size, double* ans)
+void f_16::f_16_rk4(double t0, double* y0, double dt, int size, double* ans)
 {
     // print first function calls in check file
     FILE* check_file = fopen("check_4_3.txt", "w");
@@ -175,7 +177,7 @@ void cannonball::cannonball_rk4(double t0, double* y0, double dt, int size, doub
     
     double* dy = new double[size];
     // k1:
-    cannonball_rk4_func(t0, y0, dy);
+    f_16_rk4_func(t0, y0, dy);
     fprintf(check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11], dy[12]);
     
     // multiply k1 by dt 
@@ -187,7 +189,7 @@ void cannonball::cannonball_rk4(double t0, double* y0, double dt, int size, doub
     }
 
     // k2:  
-    cannonball_rk4_func(t0 + (0.5 * dt), m_y_temp, dy);
+    f_16_rk4_func(t0 + (0.5 * dt), m_y_temp, dy);
     fprintf(check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11], dy[12]);
     
     // multiply k2 by dt and then update y_temp
@@ -198,7 +200,7 @@ void cannonball::cannonball_rk4(double t0, double* y0, double dt, int size, doub
     }
     
     // k3:
-    cannonball_rk4_func(t0 + (0.5 * dt), m_y_temp, dy);
+    f_16_rk4_func(t0 + (0.5 * dt), m_y_temp, dy);
     fprintf(check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11], dy[12]);//fprintf(check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11]);
     
     // multiply k2 by dt and then update y_temp
@@ -209,7 +211,7 @@ void cannonball::cannonball_rk4(double t0, double* y0, double dt, int size, doub
     }
     
     // k4:
-    cannonball_rk4_func(t0 + dt, m_y_temp, dy);
+    f_16_rk4_func(t0 + dt, m_y_temp, dy);
     fprintf(check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11], dy[12]);//fprintf(check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11]);
     fclose(check_file);
     
@@ -224,12 +226,12 @@ void cannonball::cannonball_rk4(double t0, double* y0, double dt, int size, doub
     
 }
 
-void cannonball::exercise_4_3()
+void f_16::exercise_4_3()
 {
     Atmosphere atm;
     
     // print results in a file
-    FILE* en_file = fopen("cannonball.txt", "w");
+    FILE* en_file = fopen("f_16.txt", "w");
     fprintf(en_file, "  Time[s]              u[ft/s]            v[ft/s]                w[ft/s]              p[rad/s]             q[rad/s]             r[rad/s]             x[ft]                y[ft]                z[ft]                e0                   ex                   ey                   ez\n");
     
     double t0 = 0.0;
@@ -264,7 +266,7 @@ void cannonball::exercise_4_3()
     double* y = new double[13];
     
     do {
-        cannonball_rk4(t0, y0, m_time_step, size, y);
+        f_16_rk4(t0, y0, m_time_step, size, y);
         
         fprintf(en_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, y0[0], y0[1], y0[2],y0[3],y0[4], y0[5], y0[6], y0[7], y0[8], y0[9], y0[10], y0[11], y0[12]);
         

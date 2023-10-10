@@ -4,20 +4,20 @@
     },
     
     "reference" : {
-        "area[ft^2]" : 0.08726646259,
+        "area[ft^2]" : 0.08766240,
         "length[ft]" : 0.333333
     },
     
     "initial" : {
-        "airspeed[ft/s]" : 500.0,
-        "altitude[ft]" : 5.0,
-        "elevation_angle[deg]" : 5.0
+        "airspeed[ft/s]" : 100.0,
+        "altitude[ft]" : 15000.0,
+        "elevation_angle[deg]" : 0.0
     },
 
     "mass" : {
-        "weight[lbf]" : 8.71694998,
+        "weight[lbf]" : 9.0,
         "Ixx[slug*ft^2]" : 0.0030103454,
-        "Iyy[slug*ft^2]" : 0.00097
+        "Iyy[slug*ft^2]" : 0.0030103454
     },
     
     "aerodynamics" : {

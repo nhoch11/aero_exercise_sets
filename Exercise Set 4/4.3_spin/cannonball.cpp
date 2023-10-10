@@ -46,7 +46,8 @@ double cannonball::get_sphere_CD(double reynolds)
     while (i<44 && reynolds > m_Re_points[i]){i++;}
 
     // check if i reynolds input is out of range
-    if (i ==1 || i == 45);{return 0.0;}
+    if (reynolds>m_Re_points[43]);{return 0.32;}
+
 
     // now we have the correct upper bound i,do linear interpolation
     double x0 = m_Re_points[i-1];
@@ -77,6 +78,7 @@ void cannonball::aerodynamics_cannonball(double* y, double* ans)
  
     // calculate alpha, V
     double alpha  = atan2(w, u);
+     
     double beta = atan2(v,u);
     double V = sqrt(pow(u,2) + pow(v,2) + pow(w,2));
 
@@ -84,9 +86,9 @@ void cannonball::aerodynamics_cannonball(double* y, double* ans)
     //double CL =  m_CLa * alpha;
     //double CS =  m_CLa * beta;
     //double CD =  m_CD0 + (m_CD2 * pow(CL,2));
-    double Cl =  m_Cl0 + ((m_Clp * m_ref_length * p) / V);
-    double Cm =  (m_Cma * alpha) + ((m_Cmq * m_ref_length * q) / V);
-    double Cn = -(m_Cma * beta) +  ((m_Cmq * m_ref_length * r) / V);
+    //double Cl =  m_Cl0 + ((m_Clp * m_ref_length * p) / V);
+    //double Cm =  (m_Cma * alpha) + ((m_Cmq * m_ref_length * q) / V);
+    //double Cn = -(m_Cma * beta) +  ((m_Cmq * m_ref_length * r) / V);
 
     // get rho, mu, Re
     get_atmospheric_properties_english(-zf, m_atm);
@@ -96,16 +98,16 @@ void cannonball::aerodynamics_cannonball(double* y, double* ans)
 
     // get drag of a sphere
     double CD = get_sphere_CD(Re);
-
-    double* lift_vec = cross(u,v,w, p,q,r);
+    
+    double* lift_vec = cross( p,q,r, u,v,w);
     double spin_lift       = 0.15*(4/3)*4*pi*pi*m_ref_length*m_ref_length*m_ref_length*rho*lift_vec[2];
     double spin_side_force = 0.15*(4/3)*4*pi*pi*m_ref_length*m_ref_length*m_ref_length*rho*lift_vec[1];
     double spin_drag       = 0.15*(4/3)*4*pi*pi*m_ref_length*m_ref_length*m_ref_length*rho*lift_vec[0];
 
     // update forces and moments
-    ans[0] =  spin_drag*sin(alpha) - 0.5*rho*pow(V,2)*m_ref_area*CD*cos(alpha)*cos(beta); // F_xb
+    ans[0] =  spin_lift*sin(alpha) -spin_side_force*cos(alpha)*sin(beta) - 0.5*rho*pow(V,2)*m_ref_area*CD*cos(alpha)*cos(beta); // F_xb
     ans[1] =  spin_side_force*cos(beta) - 0.5*rho*pow(V,2)*m_ref_area*CD*sin(beta); // F_yb
-    ans[2] = -spin_lift*cos(alpha) - 0.5*rho*pow(V,2)*m_ref_area*CD*sin(alpha)*cos(beta); // F_zb
+    ans[2] = -spin_lift*cos(alpha) -spin_side_force*sin(alpha)*sin(beta) - 0.5*rho*pow(V,2)*m_ref_area*CD*sin(alpha)*cos(beta); // F_zb
     ans[3] =  0.0; // 0.5*rho*pow(V,2)*m_ref_area*m_ref_length*Cl; // M_xb
     ans[4] =  0.0; // 0.5*rho*pow(V,2)*m_ref_area*m_ref_length*Cm; // M_yb
     ans[5] =  0.0; // 0.5*rho*pow(V,2)*m_ref_area*m_ref_length*Cn; // M_zb
@@ -243,6 +245,7 @@ void cannonball::exercise_4_3()
     
     // print results in a file
     FILE* en_file = fopen("cannonball.txt", "w");
+   
     fprintf(en_file, "  Time[s]              u[ft/s]            v[ft/s]                w[ft/s]              p[rad/s]             q[rad/s]             r[rad/s]             x[ft]                y[ft]                z[ft]                e0                   ex                   ey                   ez\n");
     
     double t0 = 0.0;

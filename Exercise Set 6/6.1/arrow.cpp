@@ -64,7 +64,7 @@ void arrow::aerodynamics_2_2(double* y, double* ans)
     // update F_xb [0], F_zb [1], and M_yb [2]
     ans[0] = -0.5*rho*pow(V,2)*m_ref_area*CD;
     ans[1] = -0.5*rho*pow(V,2)*m_ref_area*CL;
-    ans[2] =  0.5*rho*pow(V,2)*m_ref_area*m_ref_length*Cm;
+    ans[2] = 0.5*rho*pow(V,2)*m_ref_area*m_ref_length*Cm;
 }
 void arrow::arrow_rk4_func_2_2(double t, double* y, double* ans)
 {
@@ -360,8 +360,12 @@ void arrow::aerodynamics_3_9(double* y, double* ans)
     double p  = y[3]; 
     double q  = y[4];
     double r  = y[5];
-
+    double xf = y[6]; 
+    double yf = y[7];
     double zf = y[8];
+    double phi = y[9];
+    double theta = y[10];
+    double psi = y[11];
  
     // calculate alpha, V
     double alpha  = atan2(w, u);
@@ -426,8 +430,30 @@ void arrow::arrow_rk4_func_3_9(double t, double* y, double* ans)
     ans[4]  = (Myb + (m_Iyy - m_Ixx)*p*r)/m_Iyy; // qdot
     ans[5]  = (Mzb + (m_Ixx - m_Iyy)*p*q)/m_Iyy; // rdot
     
+    // build quat vectors for first quat mult
+    double* quatA    = new double[4];
+    double* quatB    = new double[4];
+    double* quat_AB  = new double[4];
+    double* quat_xyz = new double[4];
+    
+    quatA[0] = 0.0;
+    quatA[1] = u;
+    quatA[2] = v;
+    quatA[3] = w;
 
-    body_to_fixed(&y[0], &y[9], &ans[6]);
+    quatB[0] =  e0;
+    quatB[1] = -ex;
+    quatB[2] = -ey;
+    quatB[3] = -ez;
+
+    quat_mult(quatA, quatB, quat_AB);
+
+    quat_mult(&y[9], quat_AB, quat_xyz);
+
+    // take the last 3 components of quat_xyz as x, y and z (the first element is 0.0)
+    ans[6] = quat_xyz[1];
+    ans[7] = quat_xyz[2];
+    ans[8] = quat_xyz[3];
 
     ans[9]  = 0.5*(-ex*p - ey*q - ez*r); // e0 dot
     ans[10] = 0.5*( e0*p - ez*q + ey*r); // ex dot
@@ -521,6 +547,9 @@ void arrow::exercise_3_9()
     double* quat = new double[4];
     euler_to_quat(&y0[9], quat);
 
+    // normalize the quat
+    quat_norm(quat);
+
     // store the quat in y0
     y0[9] = quat[0];
     y0[10] = quat[1];
@@ -530,17 +559,14 @@ void arrow::exercise_3_9()
     double* y = new double[13];
     
     do {
-        // re-normalize the quat
-        quat_norm(&y0[9]);
-        
-        // print time step to file
+        arrow_rk4_3_9(t0, y0, m_time_step, size, y);
         fprintf(en_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, y0[0], y0[1], y0[2],y0[3],y0[4], y0[5], y0[6], y0[7], y0[8], y0[9], y0[10], y0[11], y0[12]);
         
-        // integrate forward
-        arrow_rk4_3_9(t0, y0, m_time_step, size, y);
-        
-        // y0 = y ( make y0 whatever y is)
+        // y = y0 ( copy y0 into y)
         array_copy(y, y0, size);
+
+        // re-normalize the quat
+        quat_norm(&y[9]);
         
         // add time step
         t0 += m_time_step;
