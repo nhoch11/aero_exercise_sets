@@ -7,7 +7,8 @@ int main (int argc, char * const argv[])
 
     aircraft* my_aircraft = new aircraft("f_16.json");
 
-    my_aircraft->exercise_6_1();
+    my_aircraft->init_sim();
+    //my_aircraft->exercise_6_1();
 
     
     cout<<"Program completed: "<<endl;

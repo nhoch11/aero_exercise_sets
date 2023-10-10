@@ -28,7 +28,7 @@ aircraft::aircraft(string filename)
     m_hx = data["aircraft"]["hx[slug-ft^2/s]"];
     m_hy = data["aircraft"]["hy[slug-ft^2/s]"];
     m_hz = data["aircraft"]["hz[slug-ft^2/s]"];
-    m_cg_shift = data["aircraft"]["CG-shift[ft]"];
+    //m_cg_shift = data["aircraft"]["CG-shift[ft]"];
     // put thrust stuff here
     m_T0 = data["aircraft"]["thrust"]["T0[lbf]"];
     m_T1 = data["aircraft"]["thrust"]["T1[lbf-s/ft]"];
@@ -38,17 +38,28 @@ aircraft::aircraft(string filename)
     // initial state
     m_V = data["initial"]["airspeed[ft/s]"];
     m_altitude = data["initial"]["altitude[ft]"];
-    m_elv = data["initial"]["elevation_angle[deg]"]*180.0/pi;
-    m_bank = data["initial"]["bank_angle[deg]"]*180.0/pi;
-    m_alpha = data["initial"]["alpha[deg]"]*180.0/pi;
-    m_beta = data["initial"]["beta[deg]"]*180.0/pi;
+    m_elv_angle = data["initial"]["elevation_angle[deg]"];
+    m_elv_angle = m_elv_angle*pi/180.0;
+    m_bank = data["initial"]["bank_angle[deg]"];
+    m_bank = m_bank*pi/180.0;
+    m_alpha = data["initial"]["alpha[deg]"];
+    m_alpha = m_alpha*pi/180.0;
+    m_beta = data["initial"]["beta[deg]"];
+    m_beta = m_beta*pi/180.0;
     m_p = data["initial"]["p[deg/s]"];
+    m_p = m_p*pi/180.0;
     m_q = data["initial"]["q[deg/s]"];
+    m_q = m_q*pi/180.0;
     m_r = data["initial"]["r[deg/s]"];
-    m_heading = data["initial"]["heading_angle[deg]"]*180.0/pi;
-    m_aileron = data["initial"]["aileron[deg]"]*180.0/pi;
-    m_elevator = data["initial"]["elevator[deg]"]*180.0/pi;
-    m_rudder = data["initial"]["rudder[deg]"]*180.0/pi;
+    m_r = m_r*pi/180.0;
+    m_heading = data["initial"]["heading_angle[deg]"];
+    m_heading = m_heading*pi/180.0;
+    m_aileron = data["initial"]["aileron[deg]"];
+    m_aileron = m_aileron*pi/180.0;
+    m_elevator = data["initial"]["elevator[deg]"];
+    m_elevator = m_elevator*pi/180.0;
+    m_rudder = data["initial"]["rudder[deg]"];
+    m_rudder = m_rudder*pi/180.0;
     m_throttle = data["initial"]["throttle"];
 
     // aerodynamics
@@ -88,6 +99,8 @@ aircraft::aircraft(string filename)
     m_Cn_Lda = data["aerodynamics"]["Cn,Lda"];
     m_Cn_dr = data["aerodynamics"]["Cn,dr"];
     
+    // some calcs
+    m_cw = m_wing_area/m_wing_span;
 }
 
 
@@ -107,32 +120,37 @@ void aircraft::aerodynamics_aircraft(double* y, double* ans)
     double theta = y[10];
     double psi = y[11];
  
-    // calculate alpha, V
-    double alpha  = atan2(w, u);
-    double beta = atan2(v,u);
-    
+    // calculate V, alpha, beta, pbar, qbar, rbar
     double V = sqrt(pow(u,2) + pow(v,2) + pow(w,2));
+    double alpha  = atan2(w, u);
+    double beta = asin(v/V);
+    double pbar = p*m_wing_span/(2*V);
+    double qbar = q*m_cw/(2*V);
+    double rbar = r*m_wing_span/(2*V);    
 
     // calculate CL, CD, and Cm
-    //double CL =  m_CLa * alpha;
-    //double CS =  m_CLa * beta;
-    //double CD =  m_CD0 + (m_CD2 * pow(CL,2));
-    double Cl =  m_Cl0 + ((m_Clp * m_ref_length * p) / V);
-    double Cm =  (m_Cma * alpha) + ((m_Cmq * m_ref_length * q) / V);
-    double Cn = -(m_Cma * beta) +  ((m_Cmq * m_ref_length * r) / V);
+    double CL1 = m_CL0 + m_CL_a*alpha;
+    double CL  = m_CL0 + m_CL_a*alpha + m_CL_qbar*qbar + m_CL_de*m_elevator;
+    double CS  = m_CS_b*beta + m_CS_pbar*pbar + m_CS_rbar*rbar + m_CS_da*m_aileron + m_CS_dr*m_rudder;
+    double CD  = m_CDL0 + m_CD_L*CL1 + m_CD_L2*CL1*CL1 + m_CD_S2*CS*CS + (m_CD_Lqbar*CL1 + m_CD_qbar)*qbar + (m_CD_Lde*CL1 + m_CD_de)*m_elevator + m_CD_de2*m_elevator*m_elevator;
+    double Cl  = m_Cl_b*beta + m_Cl_pbar*pbar + (m_Cl_Lrbar*CL1 + m_Cl_rbar)*rbar + m_Cl_da*m_aileron + m_CL_de*m_elevator;
+    double Cm  = m_Cm0 + m_Cm_a*alpha + m_Cm_qbar*qbar + m_Cm_de*m_elevator;
+    double Cn  = m_Cn_b*beta + (m_Cn_Lpbar*CL1 + m_Cn_pbar)*pbar + m_Cn_rbar*rbar + (m_Cn_Lda*CL1 + m_Cn_da)*m_aileron + m_Cn_dr*m_rudder; 
 
     // get rho, mu, Re
     get_atmospheric_properties_english(-zf, m_atm);
     double rho = m_atm.density;
     double mu  = m_atm.dynamic_viscosity;
-    double Re  = rho*V*m_ref_length/mu;
+    //double Re  = rho*V*m_ref_length/mu;
+    double ca = cos(alpha);
+    double cb = cos(beta);
+    double sa = sin(alpha);
+    double sb = sin(beta);
 
-    // get drag of a sphere
-    double CD = get_sphere_CD(Re);
     // update forces and moments
-    ans[0] =  -0.5*rho*pow(V,2)*m_ref_area*CD*cos(alpha)*cos(beta); // F_xb
-    ans[1] =  -0.5*rho*pow(V,2)*m_ref_area*CD*sin(beta); // F_yb
-    ans[2] =  -0.5*rho*pow(V,2)*m_ref_area*CD*sin(alpha)*cos(beta); // F_zb
+    ans[0] =  -0.5*rho*pow(V,2)*m_wing_area*(CD*ca*cb + CS*ca*sb - CL*sa); // F_xb
+    ans[1] =   0.5*rho*pow(V,2)*m_wing_area*(CS*cb - CD*sb); // F_yb
+    ans[2] =  -0.5*rho*pow(V,2)*m_wing_area*(CD*sa*cb + CS*sa*sb + CL*ca); // F_zb
     ans[3] =  0.0; // 0.5*rho*pow(V,2)*m_ref_area*m_ref_length*Cl; // M_xb
     ans[4] =  0.0; // 0.5*rho*pow(V,2)*m_ref_area*m_ref_length*Cm; // M_yb
     ans[5] =  0.0; // 0.5*rho*pow(V,2)*m_ref_area*m_ref_length*Cn; // M_zb
@@ -269,25 +287,21 @@ void aircraft::init_sim()
 {
     Atmosphere atm;
     
-    // print results in a file
-    FILE* en_file = fopen("aircraft.txt", "w");
-    fprintf(en_file, "  Time[s]              u[ft/s]            v[ft/s]                w[ft/s]              p[rad/s]             q[rad/s]             r[rad/s]             x[ft]                y[ft]                z[ft]                e0                   ex                   ey                   ez\n");
     
-    double t0 = 0.0;
     int size = 13;
     double* y0 = new double[size];
-    y0[0]  = m_init_V;         // u
-    y0[1]  = 0.0;              // v
-    y0[2]  = 0.0;              // w
-    y0[3]  = 0.0;              // p
-    y0[4]  = 0.0;              // q
-    y0[5]  = 0.0;              // r
+    y0[0]  = sqrt((m_V*m_V - pow(m_V*sin(m_beta), 2))/(1 + pow(tan(m_alpha), 2)));         // u
+    y0[1]  = m_V*sin(m_beta);              // v
+    y0[2]  = y0[0]*tan(m_alpha);           // w
+    y0[3]  = m_p;              // p
+    y0[4]  = m_q;              // q
+    y0[5]  = m_r;              // r
     y0[6]  = 0.0;              // xf
     y0[7]  = 0.0;              // yf
-    y0[8]  = -m_init_altitude; // zf
-    y0[9]  = 0.0;              // phi
-    y0[10] = m_init_theta;     // theta
-    y0[11] = 0.0;              // psi
+    y0[8]  = -m_altitude;      // zf
+    y0[9]  = m_bank;           // phi
+    y0[10] = m_elv_angle;      // theta
+    y0[11] = m_heading;        // psi
 
     // convert phi, theta, and psi to a quat
     double* quat = new double[4];
@@ -302,29 +316,35 @@ void aircraft::init_sim()
     y0[11] = quat[2];
     y0[12] = quat[3];
 
-    double* y = new double[13];
+    //print results in a file
+    FILE* en_file = fopen("initial_state.txt", "w");
+    fprintf(en_file, "Initial State\n");
+    fprintf(en_file, "  Time[s]              u[ft/s]            v[ft/s]                w[ft/s]              p[rad/s]             q[rad/s]             r[rad/s]             x[ft]                y[ft]                z[ft]                e0                   ex                   ey                   ez\n");
+    fprintf(en_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, y0[0], y0[1], y0[2],y0[3],y0[4], y0[5], y0[6], y0[7], y0[8], y0[9], y0[10], y0[11], y0[12]);
+        
+    // double* y = new double[13];
 }
 
 void aircraft::exercise_6_1()
 {
-    
-    do {
-        aircraft_rk4(t0, y0, m_time_step, size, y);
+    double t0 = 0.0;
+    //do {
+        //aircraft_rk4(t0, y0, m_time_step, size, y);
         
-        fprintf(en_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, y0[0], y0[1], y0[2],y0[3],y0[4], y0[5], y0[6], y0[7], y0[8], y0[9], y0[10], y0[11], y0[12]);
+        //fprintf(en_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, y0[0], y0[1], y0[2],y0[3],y0[4], y0[5], y0[6], y0[7], y0[8], y0[9], y0[10], y0[11], y0[12]);
         
         // y = y0 ( copy y0 into y)
-        array_copy(y, y0, size);
+        //array_copy(y, y0, size);
 
         // re-normalize the quat
-        quat_norm(&y[9]);
+        //quat_norm(&y[9]);
         
         // add time step
-        t0 += m_time_step;
-    } while (-y0[8] > 0.0);
+        //t0 += m_time_step;
+    //} while (-y0[8] > 0.0);
     //while (t0<0.005);
     
-    fclose(en_file);
+    //fclose(en_file);
     
 }
 

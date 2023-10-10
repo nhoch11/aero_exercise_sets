@@ -51,7 +51,7 @@ private:
     // initial state
     double m_V;
     double m_altitude;
-    double m_elv;
+    double m_elv_angle;
     double m_bank;
     double m_alpha;
     double m_beta;
@@ -100,6 +100,9 @@ private:
     double m_Cn_da;
     double m_Cn_Lda;
     double m_Cn_dr;
+
+    // additional variables
+    double m_cw;
 
     // declare variables for arrow_rk4
     double* m_k1 = new double[12];

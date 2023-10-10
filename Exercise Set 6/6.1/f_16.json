@@ -16,11 +16,9 @@
         "hx[slug-ft^2/s]" : 160.0,
         "hy[slug-ft^2/s]" : 0.0,
         "hz[slug-ft^2/s]" : 0.0,
-        "CG_shift[ft]" : [0.0, 0.0, 0.0],
+        
         
         "thrust" : {
-            "location[ft]" : [0.0, 0.0, 0.0],
-            "direction" : [1.0, 0.0, 0.0],
             "T0[lbf]" : 29550,
             "T1[lbf-s/ft]" : 0.0,
             "T2[lbf-s^2/ft^2]" : 0.0,
