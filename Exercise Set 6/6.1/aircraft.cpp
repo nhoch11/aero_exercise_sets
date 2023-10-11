@@ -152,9 +152,9 @@ void aircraft::aerodynamics_aircraft(double* y, double* ans)
     ans[0] =  -0.5*rho*pow(V,2)*m_wing_area*(CD*ca*cb + CS*ca*sb - CL*sa) + m_throttle*pow(rho/m_rho0, m_a)*m_T0; // F_xb
     ans[1] =   0.5*rho*pow(V,2)*m_wing_area*(CS*cb - CD*sb); // F_yb
     ans[2] =  -0.5*rho*pow(V,2)*m_wing_area*(CD*sa*cb + CS*sa*sb + CL*ca); // F_zb
-    ans[3] =   0.5*rho*pow(V,2)*m_wing_area*m_wing_span*(Cl*ca*cb - Cm*ca*sb - Cn*sa); // 
-    ans[4] =   0.5*rho*pow(V,2)*m_wing_area*m_wing_span*(Cl*sb + Cm*cb); // 
-    ans[5] =   0.5*rho*pow(V,2)*m_wing_area*m_wing_span*(Cl*sa*cb - Cm*sa*sb + Cn*ca); // 
+    ans[3] =   0.5*rho*pow(V,2)*m_wing_area*m_wing_span*Cl; // 
+    ans[4] =   0.5*rho*pow(V,2)*m_wing_area*m_wing_span*Cm; // 
+    ans[5] =   0.5*rho*pow(V,2)*m_wing_area*m_wing_span*Cn; // 
 }
 
 void aircraft::aircraft_rk4_func(double t, double* y, double* ans)
@@ -199,13 +199,17 @@ void aircraft::aircraft_rk4_func(double t, double* y, double* ans)
         {-m_hy, m_hx, 0.0}
     };
 
+    double stuff_Mx = Mxb + (m_Iyy - m_Izz)*q*r + m_Iyz*(q*q - r*r) + m_Ixz*p*q - m_Ixy*p*r;
+    double stuff_My = -m_hx*r + Myb + (m_Izz - m_Ixx)*p*r + m_Ixz*(r*r - p*p) + m_Ixy*q*r - m_Iyz*p*q;
+    double stuff_Mz = m_hx*q + Mzb + (m_Ixx - m_Iyy)*p*q +  m_Ixy*(p*p - q*q) + m_Iyz*p*r - m_Ixy*q*r;
+
     ans[0]  = (g*Fxb/m_weight) + (g*2.0*(ex*ez - ey*e0)) + (r*v) - (q*w)  ; // udot
     ans[1]  = (g*Fyb/m_weight) + (g*2.0*(ey*ez + ex*e0)) + (p*w) - (r*u); // vdot
     ans[2]  = (g*Fzb/m_weight) + (g*(ez*ez + e0*e0 - ex*ex - ey*ey)) + (q*u) - (p*v); // wdot
-    ans[3]  = (Mxb/m_Ixx); // pdot
-    ans[4]  = (Myb + (m_Iyy - m_Ixx)*p*r)/m_Iyy; // qdot
-    ans[5]  = (Mzb + (m_Ixx - m_Iyy)*p*q)/m_Iyy; // rdot
-    
+    ans[3]  = (stuff_Mx + stuff_Mz*m_Ixz/m_Izz)/(m_Ixx - m_Ixz*m_Ixz/m_Izz); // pdot
+    ans[4]  = stuff_My/m_Iyy; // qdot
+    ans[5]  = (stuff_Mz + ans[3]*m_Ixz)/m_Izz; // rdot
+     
     // build quat vectors for first quat mult
     double* quatA    = new double[4];
     double* quatB    = new double[4];
@@ -241,7 +245,7 @@ void aircraft::aircraft_rk4_func(double t, double* y, double* ans)
 void aircraft::aircraft_rk4(double t0, double* y0, double dt, int size, double* ans)
 {
     // print first function calls in check file
-    FILE* check_file = fopen("check_4_3.txt", "w");
+    FILE* check_file = fopen("check_6_1.txt", "w");
     fprintf(check_file, "  Time[s]              udot                vdot                 wdot                  pdot               qdot                 rdot                 xdot                  ydot                 zdot                   e0dot                exdot               eydot              ezdot\n");
     
     double* dy = new double[size];
