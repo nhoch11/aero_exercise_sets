@@ -101,6 +101,7 @@ aircraft::aircraft(string filename)
     
     // some calcs
     m_cw = m_wing_area/m_wing_span;
+    m_rho0 = 0.002377; // [slug/ft^3]
 }
 
 
@@ -148,7 +149,7 @@ void aircraft::aerodynamics_aircraft(double* y, double* ans)
     double sb = sin(beta);
 
     // update forces and moments
-    ans[0] =  -0.5*rho*pow(V,2)*m_wing_area*(CD*ca*cb + CS*ca*sb - CL*sa); // F_xb
+    ans[0] =  -0.5*rho*pow(V,2)*m_wing_area*(CD*ca*cb + CS*ca*sb - CL*sa) + m_throttle*pow(rho/m_rho0, m_a)*m_T0; // F_xb
     ans[1] =   0.5*rho*pow(V,2)*m_wing_area*(CS*cb - CD*sb); // F_yb
     ans[2] =  -0.5*rho*pow(V,2)*m_wing_area*(CD*sa*cb + CS*sa*sb + CL*ca); // F_zb
     ans[3] =   0.5*rho*pow(V,2)*m_wing_area*m_wing_span*(Cl*ca*cb - Cm*ca*sb - Cn*sa); // 
@@ -186,7 +187,19 @@ void aircraft::aircraft_rk4_func(double t, double* y, double* ans)
 
     double g = gravity_english(-zf);
 
-    ans[0]  = (g*Fxb/m_weight) + (g*2.0*(ex*ez - ey*e0)) + (r*v) - (q*w); // udot
+    double inertia[3][3] = {
+        {m_Ixx, -m_Ixy, -m_Ixz},
+        {-m_Ixy, m_Iyy, -m_Iyz},
+        {-m_Ixz, -m_Iyz, m_Izz}
+    };
+
+    double h_inertia[3][3] = {
+        {0.0, -m_hz, m_hy},
+        {m_hz, 0.0, -m_hx},
+        {-m_hy, m_hx, 0.0}
+    };
+
+    ans[0]  = (g*Fxb/m_weight) + (g*2.0*(ex*ez - ey*e0)) + (r*v) - (q*w)  ; // udot
     ans[1]  = (g*Fyb/m_weight) + (g*2.0*(ey*ez + ex*e0)) + (p*w) - (r*u); // vdot
     ans[2]  = (g*Fzb/m_weight) + (g*(ez*ez + e0*e0 - ex*ex - ey*ey)) + (q*u) - (p*v); // wdot
     ans[3]  = (Mxb/m_Ixx); // pdot
@@ -283,7 +296,7 @@ void aircraft::aircraft_rk4(double t0, double* y0, double dt, int size, double* 
 }
 
 
-void aircraft::init_sim()
+double* aircraft::init_sim()
 {
     Atmosphere atm;
     
@@ -316,22 +329,28 @@ void aircraft::init_sim()
     y0[11] = quat[2];
     y0[12] = quat[3];
 
+    double t0 = 0.0;
     //print results in a file
     FILE* init_file = fopen("initial_state.txt", "w");
     fprintf(init_file, "Initial State\n");
     fprintf(init_file, "  Time[s]              u[ft/s]            v[ft/s]                w[ft/s]              p[rad/s]             q[rad/s]             r[rad/s]             x[ft]                y[ft]                z[ft]                e0                   ex                   ey                   ez\n");
     fprintf(init_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, y0[0], y0[1], y0[2],y0[3],y0[4], y0[5], y0[6], y0[7], y0[8], y0[9], y0[10], y0[11], y0[12]);
         
-    // double* y = new double[13];
+    return y0;
 }
 
 void aircraft::exercise_6_1()
 {
+    Atmosphere atm;
+
     FILE* out_file = fopen("f_16.txt", "w");
     fprintf(out_file, "  Time[s]              u[ft/s]            v[ft/s]                w[ft/s]              p[rad/s]             q[rad/s]             r[rad/s]             x[ft]                y[ft]                z[ft]                e0                   ex                   ey                   ez\n");
     
     double t0 = 0.0;
-    
+    int size = 13;
+    double* y0 = init_sim();
+
+    double* y = new double[size];
     do {
         aircraft_rk4(t0, y0, m_time_step, size, y);
         
@@ -345,10 +364,11 @@ void aircraft::exercise_6_1()
         
         // add time step
         t0 += m_time_step;
-    } while (-y0[8] > 0.0);
+
+    } while (t0 <= m_total_time);
     //while (t0<0.005);
     
-    fclose(en_file);
+    fclose(out_file);
     
 }
 

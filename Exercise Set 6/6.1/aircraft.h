@@ -12,7 +12,6 @@ public: // private variables and function can only be accessed inside the class
     aircraft(std::string filename); // class constructor
     ~aircraft(){}; // class destructor (default: releases memory)
     
-    void init_sim(); // this will initialize the state vector with initial conditions
     void exercise_6_1();
 
     
@@ -103,6 +102,7 @@ private:
 
     // additional variables
     double m_cw;
+    double m_rho0;
 
     // declare variables for arrow_rk4
     double* m_k1 = new double[12];
@@ -113,12 +113,13 @@ private:
 
 
     // functions;
-
     void aerodynamics_aircraft(double* y, double* ans);
 
     void aircraft_rk4_func(double t, double* y, double* ans);
 
     void aircraft_rk4(double t0, double* y0, double dt, int size, double* ans);
+
+    double* init_sim(); // this will initialize the state vector with initial conditions
 
     
 
