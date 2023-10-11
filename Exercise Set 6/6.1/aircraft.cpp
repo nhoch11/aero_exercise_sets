@@ -151,9 +151,9 @@ void aircraft::aerodynamics_aircraft(double* y, double* ans)
     ans[0] =  -0.5*rho*pow(V,2)*m_wing_area*(CD*ca*cb + CS*ca*sb - CL*sa); // F_xb
     ans[1] =   0.5*rho*pow(V,2)*m_wing_area*(CS*cb - CD*sb); // F_yb
     ans[2] =  -0.5*rho*pow(V,2)*m_wing_area*(CD*sa*cb + CS*sa*sb + CL*ca); // F_zb
-    ans[3] =  0.0; // 0.5*rho*pow(V,2)*m_ref_area*m_ref_length*Cl; // M_xb
-    ans[4] =  0.0; // 0.5*rho*pow(V,2)*m_ref_area*m_ref_length*Cm; // M_yb
-    ans[5] =  0.0; // 0.5*rho*pow(V,2)*m_ref_area*m_ref_length*Cn; // M_zb
+    ans[3] =   0.5*rho*pow(V,2)*m_wing_area*m_wing_span*(Cl*ca*cb - Cm*ca*sb - Cn*sa); // 
+    ans[4] =   0.5*rho*pow(V,2)*m_wing_area*m_wing_span*(Cl*sb + Cm*cb); // 
+    ans[5] =   0.5*rho*pow(V,2)*m_wing_area*m_wing_span*(Cl*sa*cb - Cm*sa*sb + Cn*ca); // 
 }
 
 void aircraft::aircraft_rk4_func(double t, double* y, double* ans)
@@ -317,34 +317,38 @@ void aircraft::init_sim()
     y0[12] = quat[3];
 
     //print results in a file
-    FILE* en_file = fopen("initial_state.txt", "w");
-    fprintf(en_file, "Initial State\n");
-    fprintf(en_file, "  Time[s]              u[ft/s]            v[ft/s]                w[ft/s]              p[rad/s]             q[rad/s]             r[rad/s]             x[ft]                y[ft]                z[ft]                e0                   ex                   ey                   ez\n");
-    fprintf(en_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, y0[0], y0[1], y0[2],y0[3],y0[4], y0[5], y0[6], y0[7], y0[8], y0[9], y0[10], y0[11], y0[12]);
+    FILE* init_file = fopen("initial_state.txt", "w");
+    fprintf(init_file, "Initial State\n");
+    fprintf(init_file, "  Time[s]              u[ft/s]            v[ft/s]                w[ft/s]              p[rad/s]             q[rad/s]             r[rad/s]             x[ft]                y[ft]                z[ft]                e0                   ex                   ey                   ez\n");
+    fprintf(init_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, y0[0], y0[1], y0[2],y0[3],y0[4], y0[5], y0[6], y0[7], y0[8], y0[9], y0[10], y0[11], y0[12]);
         
     // double* y = new double[13];
 }
 
 void aircraft::exercise_6_1()
 {
+    FILE* out_file = fopen("f_16.txt", "w");
+    fprintf(out_file, "  Time[s]              u[ft/s]            v[ft/s]                w[ft/s]              p[rad/s]             q[rad/s]             r[rad/s]             x[ft]                y[ft]                z[ft]                e0                   ex                   ey                   ez\n");
+    
     double t0 = 0.0;
-    //do {
-        //aircraft_rk4(t0, y0, m_time_step, size, y);
+    
+    do {
+        aircraft_rk4(t0, y0, m_time_step, size, y);
         
-        //fprintf(en_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, y0[0], y0[1], y0[2],y0[3],y0[4], y0[5], y0[6], y0[7], y0[8], y0[9], y0[10], y0[11], y0[12]);
+        fprintf(out_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, y0[0], y0[1], y0[2],y0[3],y0[4], y0[5], y0[6], y0[7], y0[8], y0[9], y0[10], y0[11], y0[12]);
         
         // y = y0 ( copy y0 into y)
-        //array_copy(y, y0, size);
+        array_copy(y, y0, size);
 
         // re-normalize the quat
-        //quat_norm(&y[9]);
+        quat_norm(&y[9]);
         
         // add time step
-        //t0 += m_time_step;
-    //} while (-y0[8] > 0.0);
+        t0 += m_time_step;
+    } while (-y0[8] > 0.0);
     //while (t0<0.005);
     
-    //fclose(en_file);
+    fclose(en_file);
     
 }
 
