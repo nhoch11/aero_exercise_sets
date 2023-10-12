@@ -122,12 +122,12 @@ void aircraft::aerodynamics_aircraft(double* y, double* ans)
     double psi = y[11];
  
     // calculate V, alpha, beta, pbar, qbar, rbar
-    double V = sqrt(pow(u,2) + pow(v,2) + pow(w,2));
+    double V = sqrt(pow(u,2.0) + pow(v,2.0) + pow(w,2.0));
     double alpha  = atan2(w, u);
     double beta = asin(v/V);
-    double pbar = p*m_wing_span/(2*V);
-    double qbar = q*m_cw/(2*V);
-    double rbar = r*m_wing_span/(2*V);    
+    double pbar = p*m_wing_span/(2.0*V);
+    double qbar = q*m_cw/(2.0*V);
+    double rbar = r*m_wing_span/(2.0*V);    
 
     // calculate CL, CD, and Cm
     double CL1 = m_CL0 + m_CL_a*alpha;
