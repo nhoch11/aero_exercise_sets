@@ -330,7 +330,7 @@ bool matrix_invert_3x3(double a[3][3], double b[3][3]) {
                + a[0][2]*(a[1][0]*a[2][1] - a[1][1]*a[2][0]);
 
     if (det == 0) {
-    // The matrix is singular, cannot be inverted
+        // The matrix is singular, cannot be inverted
         return false;
     }
 
@@ -339,7 +339,7 @@ bool matrix_invert_3x3(double a[3][3], double b[3][3]) {
     b[0][2] = (a[0][1]*a[1][2] - a[0][2]*a[1][1]) / det;
     b[1][0] = (a[1][2]*a[2][0] - a[1][0]*a[2][2]) / det;
     b[1][1] = (a[0][0]*a[2][2] - a[0][2]*a[2][0]) / det;
-    b[1][2] = (a[0][1]*a[1][0] - a[0][0]*a[1][1]) / det;
+    b[1][2] = (a[0][0]*a[1][2] - a[0][2]*a[1][0]) / det;
     b[2][0] = (a[1][0]*a[2][1] - a[1][1]*a[2][0]) / det;
     b[2][1] = (a[0][1]*a[2][0] - a[0][0]*a[2][1]) / det;
     b[2][2] = (a[0][0]*a[1][1] - a[0][1]*a[1][0]) / det;

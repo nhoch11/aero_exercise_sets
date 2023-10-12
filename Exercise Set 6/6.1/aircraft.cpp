@@ -12,8 +12,8 @@ aircraft::aircraft(string filename)
     // read in json data and assign to existing class attributes
     
     // simulation
-    m_time_step = data["simulation"]["time_step[sec]"];
-    m_total_time = data["simulation"]["total_time[sec]"];
+    m_time_step = data["simulation"]["time_step[s]"];
+    m_total_time = data["simulation"]["total_time[s]"];
 
     // aircraft
     m_wing_area = data["aircraft"]["wing_area[ft^2]"];
@@ -104,6 +104,8 @@ aircraft::aircraft(string filename)
     Atmosphere atm;
     get_atmospheric_properties_english(0.0, atm);
     m_rho0 = atm.density; // [slug/ft^3]
+    //cout << "rho0" << endl;
+    //cout << m_rho0 << endl;
 
     // make I matrix and invert it
     m_I[0][0] = m_Ixx;
@@ -130,7 +132,6 @@ aircraft::aircraft(string filename)
     
 }
 
-
 void aircraft::aerodynamics_aircraft(double* y, double* ans)
 {
     // make dummy variables for readibility
@@ -145,11 +146,7 @@ void aircraft::aerodynamics_aircraft(double* y, double* ans)
     double zf = y[8];
  
     // calculate V, alpha, beta, pbar, qbar, rbar
-<<<<<<< HEAD
-    double V = sqrt(pow(u,2.0) + pow(v,2.0) + pow(w,2.0));
-=======
     double V = sqrt(u*u + v*v + w*w);
->>>>>>> cb7b6312360530819ec2bb059edd34a42d8d58e9
     double alpha  = atan2(w, u);
     double beta = asin(v/V);
     double pbar = p*m_wing_span/(2.0*V);
@@ -158,10 +155,10 @@ void aircraft::aerodynamics_aircraft(double* y, double* ans)
 
     // calculate CL, CD, and Cm
     double CL1 = m_CL0 + m_CL_a*alpha;
-    double CL  = m_CL0 + m_CL_a*alpha + m_CL_qbar*qbar + m_CL_de*m_elevator;
+    double CL  = CL1 + m_CL_qbar*qbar + m_CL_de*m_elevator;
     double CS  = m_CS_b*beta + m_CS_pbar*pbar + m_CS_rbar*rbar + m_CS_da*m_aileron + m_CS_dr*m_rudder;
     double CD  = m_CDL0 + m_CD_L*CL1 + m_CD_L2*CL1*CL1 + m_CD_S2*CS*CS + (m_CD_Lqbar*CL1 + m_CD_qbar)*qbar + (m_CD_Lde*CL1 + m_CD_de)*m_elevator + m_CD_de2*m_elevator*m_elevator;
-    double Cl  = m_Cl_b*beta + m_Cl_pbar*pbar + (m_Cl_Lrbar*CL1 + m_Cl_rbar)*rbar + m_Cl_da*m_aileron + m_CL_de*m_elevator;
+    double Cl  = m_Cl_b*beta + m_Cl_pbar*pbar + (m_Cl_Lrbar*CL1 + m_Cl_rbar)*rbar + m_Cl_da*m_aileron + m_Cl_dr*m_rudder;
     double Cm  = m_Cm0 + m_Cm_a*alpha + m_Cm_qbar*qbar + m_Cm_de*m_elevator;
     double Cn  = m_Cn_b*beta + (m_Cn_Lpbar*CL1 + m_Cn_pbar)*pbar + m_Cn_rbar*rbar + (m_Cn_Lda*CL1 + m_Cn_da)*m_aileron + m_Cn_dr*m_rudder; 
 
@@ -183,8 +180,8 @@ void aircraft::aerodynamics_aircraft(double* y, double* ans)
     ans[4] =   0.5*rho*pow(V,2)*m_wing_area*m_wing_span*Cm; // 
     ans[5] =   0.5*rho*pow(V,2)*m_wing_area*m_wing_span*Cn; // 
 
-    cout<< "ans=" << endl;
-    array_print(ans,13);
+    //cout<< "ans=" << endl;
+    //array_print(ans,13);
 }
 
 void aircraft::aircraft_rk4_func(double t, double* y, double* ans)
@@ -237,8 +234,8 @@ void aircraft::aircraft_rk4_func(double t, double* y, double* ans)
     double* pqr_dot = new double[3];
     matrix_vector_mult_3(m_I_inv, pqr_dot_stuff, pqr_dot);
 
-    cout << "pqr_dot" << endl;
-    array_print(pqr_dot, 3);
+    //cout << "pqr_dot" << endl;
+    //array_print(pqr_dot, 3);
 
     ans[0]  = (g*Fxb/m_weight) + (g*2.0*(ex*ez - ey*e0)) + (r*v) - (q*w)  ; // udot
     ans[1]  = (g*Fyb/m_weight) + (g*2.0*(ey*ez + ex*e0)) + (p*w) - (r*u); // vdot
@@ -336,7 +333,6 @@ void aircraft::aircraft_rk4(double t0, double* y0, double dt, int size, double* 
     
 }
 
-
 double* aircraft::init_sim()
 {
     //Atmosphere atm;
@@ -406,7 +402,7 @@ void aircraft::exercise_6_1()
         // add time step
         t0 += m_time_step;
 
-    } while (t0 <= 0.2);//m_total_time);
+    } while (t0 <= m_total_time);
     //while (t0<0.005);
     
     fclose(out_file);

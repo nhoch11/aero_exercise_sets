@@ -1,7 +1,7 @@
 {
     "simulation" : {
-        "time_step[sec]" : 0.1,
-        "total_time[sec]" : 10.0
+        "time_step[s]" : 0.1,
+        "total_time[s]" : 10.0
         },
     "aircraft" : {
         "wing_area[ft^2]" : 300.0,
