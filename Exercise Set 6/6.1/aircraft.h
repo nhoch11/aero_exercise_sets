@@ -104,6 +104,11 @@ private:
     double m_cw;
     double m_rho0;
 
+    double m_I[3][3];
+    double m_I_inv[3][3];
+    
+    double m_h[3][3];
+
     // declare variables for arrow_rk4
     double* m_k1 = new double[12];
     double* m_k2 = new double[12];
