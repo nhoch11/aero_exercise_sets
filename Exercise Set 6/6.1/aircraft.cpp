@@ -41,25 +41,25 @@ aircraft::aircraft(string filename)
     m_elv_angle = data["initial"]["elevation_angle[deg]"];
     m_elv_angle = m_elv_angle*pi/180.0;
     m_bank = data["initial"]["bank_angle[deg]"];
-    m_bank = m_bank*pi/180.0;
+    m_bank *= pi/180.0;
     m_alpha = data["initial"]["alpha[deg]"];
-    m_alpha = m_alpha*pi/180.0;
+    m_alpha *= pi/180.0;
     m_beta = data["initial"]["beta[deg]"];
-    m_beta = m_beta*pi/180.0;
+    m_beta *= pi/180.0;
     m_p = data["initial"]["p[deg/s]"];
-    m_p = m_p*pi/180.0;
+    m_p *= pi/180.0;
     m_q = data["initial"]["q[deg/s]"];
-    m_q = m_q*pi/180.0;
+    m_q *= pi/180.0;
     m_r = data["initial"]["r[deg/s]"];
-    m_r = m_r*pi/180.0;
+    m_r *= pi/180.0;
     m_heading = data["initial"]["heading_angle[deg]"];
-    m_heading = m_heading*pi/180.0;
+    m_heading *= pi/180.0;
     m_aileron = data["initial"]["aileron[deg]"];
-    m_aileron = m_aileron*pi/180.0;
+    m_aileron *= pi/180.0;
     m_elevator = data["initial"]["elevator[deg]"];
-    m_elevator = m_elevator*pi/180.0;
+    m_elevator *= pi/180.0;
     m_rudder = data["initial"]["rudder[deg]"];
-    m_rudder = m_rudder*pi/180.0;
+    m_rudder *= pi/180.0;
     m_throttle = data["initial"]["throttle"];
 
     // aerodynamics
@@ -101,7 +101,33 @@ aircraft::aircraft(string filename)
     
     // some calcs
     m_cw = m_wing_area/m_wing_span;
-    m_rho0 = 0.002377; // [slug/ft^3]
+    Atmosphere atm;
+    get_atmospheric_properties_english(0.0, atm);
+    m_rho0 = atm.density; // [slug/ft^3]
+
+    // make I matrix and invert it
+    m_I[0][0] = m_Ixx;
+    m_I[0][1] = -m_Ixy;
+    m_I[0][2] = -m_Ixz;
+    m_I[1][0] = -m_Ixy;
+    m_I[1][1] = m_Iyy;
+    m_I[1][2] = -m_Iyz;
+    m_I[2][0] = -m_Ixz;
+    m_I[2][1] = -m_Iyz;
+    m_I[2][2] = m_Izz;
+
+    matrix_invert_3x3(m_I, m_I_inv);
+
+    m_h[0][0] = 0.0;
+    m_h[0][1] = -m_hz;
+    m_h[0][2] = m_hy;
+    m_h[1][0] = m_hz;
+    m_h[1][1] = 0.0;
+    m_h[1][2] = -m_hx;
+    m_h[2][0] = -m_hy;
+    m_h[2][1] = m_hx;
+    m_h[2][2] = 0.0;
+    
 }
 
 
@@ -117,12 +143,13 @@ void aircraft::aerodynamics_aircraft(double* y, double* ans)
     double xf = y[6]; 
     double yf = y[7];
     double zf = y[8];
-    double phi = y[9];
-    double theta = y[10];
-    double psi = y[11];
  
     // calculate V, alpha, beta, pbar, qbar, rbar
+<<<<<<< HEAD
     double V = sqrt(pow(u,2.0) + pow(v,2.0) + pow(w,2.0));
+=======
+    double V = sqrt(u*u + v*v + w*w);
+>>>>>>> cb7b6312360530819ec2bb059edd34a42d8d58e9
     double alpha  = atan2(w, u);
     double beta = asin(v/V);
     double pbar = p*m_wing_span/(2.0*V);
@@ -155,6 +182,9 @@ void aircraft::aerodynamics_aircraft(double* y, double* ans)
     ans[3] =   0.5*rho*pow(V,2)*m_wing_area*m_wing_span*Cl; // 
     ans[4] =   0.5*rho*pow(V,2)*m_wing_area*m_wing_span*Cm; // 
     ans[5] =   0.5*rho*pow(V,2)*m_wing_area*m_wing_span*Cn; // 
+
+    cout<< "ans=" << endl;
+    array_print(ans,13);
 }
 
 void aircraft::aircraft_rk4_func(double t, double* y, double* ans)
@@ -187,28 +217,35 @@ void aircraft::aircraft_rk4_func(double t, double* y, double* ans)
 
     double g = gravity_english(-zf);
 
-    double inertia[3][3] = {
-        {m_Ixx, -m_Ixy, -m_Ixz},
-        {-m_Ixy, m_Iyy, -m_Iyz},
-        {-m_Ixz, -m_Iyz, m_Izz}
-    };
+    // create pqr matrix
+    double* pqr = new double[3];
+    pqr[0] = p;
+    pqr[1] = q;
+    pqr[2] = r;
 
-    double h_inertia[3][3] = {
-        {0.0, -m_hz, m_hy},
-        {m_hz, 0.0, -m_hx},
-        {-m_hy, m_hx, 0.0}
-    };
 
-    double stuff_Mx = Mxb + (m_Iyy - m_Izz)*q*r + m_Iyz*(q*q - r*r) + m_Ixz*p*q - m_Ixy*p*r;
-    double stuff_My = -m_hx*r + Myb + (m_Izz - m_Ixx)*p*r + m_Ixz*(r*r - p*p) + m_Ixy*q*r - m_Iyz*p*q;
-    double stuff_Mz = m_hx*q + Mzb + (m_Ixx - m_Iyy)*p*q +  m_Ixy*(p*p - q*q) + m_Iyz*p*r - m_Ixy*q*r;
+    // multiply h matrix by pqr
+    double* hpqr =  new double[3];
+    matrix_vector_mult_3(m_h, pqr, hpqr);
+
+    double pqr_dot_stuff[3];
+    pqr_dot_stuff[0] = hpqr[0] + Mxb + (m_Iyy - m_Izz)*q*r + m_Iyz*(q*q - r*r) + m_Ixz*p*q - m_Ixy*p*r;
+    pqr_dot_stuff[1] = hpqr[1] + Myb + (m_Izz - m_Ixx)*p*r + m_Ixz*(r*r - p*p) + m_Ixy*q*r - m_Iyz*p*q;
+    pqr_dot_stuff[2] = hpqr[2] + Mzb + (m_Ixx - m_Iyy)*p*q + m_Ixy*(p*p - q*q) + m_Iyz*p*r - m_Ixz*q*r;
+
+    // multiply I inv by hpqr
+    double* pqr_dot = new double[3];
+    matrix_vector_mult_3(m_I_inv, pqr_dot_stuff, pqr_dot);
+
+    cout << "pqr_dot" << endl;
+    array_print(pqr_dot, 3);
 
     ans[0]  = (g*Fxb/m_weight) + (g*2.0*(ex*ez - ey*e0)) + (r*v) - (q*w)  ; // udot
     ans[1]  = (g*Fyb/m_weight) + (g*2.0*(ey*ez + ex*e0)) + (p*w) - (r*u); // vdot
     ans[2]  = (g*Fzb/m_weight) + (g*(ez*ez + e0*e0 - ex*ex - ey*ey)) + (q*u) - (p*v); // wdot
-    ans[3]  = (stuff_Mx + stuff_Mz*m_Ixz/m_Izz)/(m_Ixx - m_Ixz*m_Ixz/m_Izz); // pdot
-    ans[4]  = stuff_My/m_Iyy; // qdot
-    ans[5]  = (stuff_Mz + ans[3]*m_Ixz)/m_Izz; // rdot
+    ans[3]  = pqr_dot[0]; // pdot
+    ans[4]  = pqr_dot[1]; // qdot
+    ans[5]  = pqr_dot[2]; //  rdot
      
     // build quat vectors for first quat mult
     double* quatA    = new double[4];
@@ -245,7 +282,7 @@ void aircraft::aircraft_rk4_func(double t, double* y, double* ans)
 void aircraft::aircraft_rk4(double t0, double* y0, double dt, int size, double* ans)
 {
     // print first function calls in check file
-    FILE* check_file = fopen("check_6_1.txt", "w");
+    FILE* check_file = fopen("check_rk4.txt", "w");
     fprintf(check_file, "  Time[s]              udot                vdot                 wdot                  pdot               qdot                 rdot                 xdot                  ydot                 zdot                   e0dot                exdot               eydot              ezdot\n");
     
     double* dy = new double[size];
@@ -302,7 +339,7 @@ void aircraft::aircraft_rk4(double t0, double* y0, double dt, int size, double* 
 
 double* aircraft::init_sim()
 {
-    Atmosphere atm;
+    //Atmosphere atm;
     
     
     int size = 13;
@@ -347,7 +384,7 @@ void aircraft::exercise_6_1()
 {
     Atmosphere atm;
 
-    FILE* out_file = fopen("f_16.txt", "w");
+    FILE* out_file = fopen("hoch_6_1.txt", "w");
     fprintf(out_file, "  Time[s]              u[ft/s]            v[ft/s]                w[ft/s]              p[rad/s]             q[rad/s]             r[rad/s]             x[ft]                y[ft]                z[ft]                e0                   ex                   ey                   ez\n");
     
     double t0 = 0.0;
@@ -369,7 +406,7 @@ void aircraft::exercise_6_1()
         // add time step
         t0 += m_time_step;
 
-    } while (t0 <= m_total_time);
+    } while (t0 <= 0.2);//m_total_time);
     //while (t0<0.005);
     
     fclose(out_file);

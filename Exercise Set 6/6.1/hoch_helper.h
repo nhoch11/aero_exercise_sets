@@ -53,4 +53,9 @@ double gravity_english(double H);
 
 double* cross(double x1, double y1, double z1, double x2, double y2, double z2);
 
+bool matrix_invert_3x3(double a[3][3], double b[3][3]);
+
+void matrix_vector_mult_3(double rm[3][3], double v[3], double* ans);
+
+void array_print(double* arr, int size);
 #endif
