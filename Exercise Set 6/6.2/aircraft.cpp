@@ -475,7 +475,7 @@ void aircraft::exercise_6_2()
         // add time step
         t0 += m_time_step;
 
-    } while (t0 <= 0.3);//  m_total_time);
+    } while (t0 <=   m_total_time); //0.3);//
     //while (t0<0.005);
     
     fclose(out_file);
