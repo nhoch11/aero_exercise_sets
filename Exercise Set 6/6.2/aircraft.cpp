@@ -129,6 +129,12 @@ aircraft::aircraft(string filename)
     m_I[2][2] = m_Izz;
 
     matrix_invert_3x3(m_I, m_I_inv);
+    //cout << "I" << endl;
+    //array_print_3x3(m_I);
+    
+    //cout << "I inv" << endl;
+    //array_print_3x3(m_I_inv);
+
 
     m_h[0][0] = 0.0;
     m_h[0][1] = -m_hz;
@@ -139,6 +145,9 @@ aircraft::aircraft(string filename)
     m_h[2][0] = -m_hy;
     m_h[2][1] = m_hx;
     m_h[2][2] = 0.0;
+
+    cout << "h" << endl;
+    array_print_3x3(m_h);
     
 }
 
@@ -177,10 +186,14 @@ void aircraft::aerodynamics_aircraft(double* y, double* ans)
     double Cm  = m_Cm0 + m_Cm_a*alpha + m_Cm_qbar*qbar + m_Cm_de*de;
     double Cn  = m_Cn_b*beta + (m_Cn_Lpbar*CL1 + m_Cn_pbar)*pbar + m_Cn_rbar*rbar + (m_Cn_Lda*CL1 + m_Cn_da)*da + m_Cn_dr*dr; 
 
+    //cout << "de" << endl;
+    //cout << de << endl;
+   
+
+
     // get rho, mu, Re
     get_atmospheric_properties_english(-zf, m_atm);
     double rho = m_atm.density;
-    double mu  = m_atm.dynamic_viscosity;
     //double Re  = rho*V*m_ref_length/mu;
     double ca = cos(alpha);
     double cb = cos(beta);
@@ -188,12 +201,12 @@ void aircraft::aerodynamics_aircraft(double* y, double* ans)
     double sb = sin(beta);
 
     // update forces and moments
-    ans[0] =  -0.5*rho*pow(V,2)*m_wing_area*(CD*ca*cb + CS*ca*sb - CL*sa) + tau*pow(rho/m_rho0, m_a)*(m_T0 + m_T1*V + m_T2*V*V); // F_xb
-    ans[1] =   0.5*rho*pow(V,2)*m_wing_area*(CS*cb - CD*sb); // F_yb
-    ans[2] =  -0.5*rho*pow(V,2)*m_wing_area*(CD*sa*cb + CS*sa*sb + CL*ca); // F_zb
-    ans[3] =   0.5*rho*pow(V,2)*m_wing_area*m_wing_span*Cl; // 
-    ans[4] =   0.5*rho*pow(V,2)*m_wing_area*m_wing_span*Cm; // 
-    ans[5] =   0.5*rho*pow(V,2)*m_wing_area*m_wing_span*Cn; // 
+    ans[0] =  -0.5*rho*V*V*m_wing_area*(CD*ca*cb + CS*ca*sb - CL*sa) + tau*pow(rho/m_rho0, m_a)*(m_T0 + m_T1*V + m_T2*V*V); // F_xb
+    ans[1] =   0.5*rho*V*V*m_wing_area*(CS*cb - CD*sb); // F_yb
+    ans[2] =  -0.5*rho*V*V*m_wing_area*(CD*sa*cb + CS*sa*sb + CL*ca); // F_zb
+    ans[3] =   0.5*rho*V*V*m_wing_area*m_wing_span*Cl; // 
+    ans[4] =   0.5*rho*V*V*m_wing_area*m_wing_span*Cm; // 
+    ans[5] =   0.5*rho*V*V*m_wing_area*m_wing_span*Cn; // 
 
     //cout<< "ans=" << endl;
     //array_print(ans,13);
@@ -247,6 +260,9 @@ void aircraft::aircraft_rk4_func(double t, double* y, double* ans)
     double* hpqr =  new double[3];
     matrix_vector_mult_3(m_h, pqr, hpqr);
 
+    //cout << "hpqr" << endl;
+    //array_print(hpqr, 3);
+
     double pqr_dot_stuff[3];
     pqr_dot_stuff[0] = hpqr[0] + Mxb + (m_Iyy - m_Izz)*q*r + m_Iyz*(q*q - r*r) + m_Ixz*p*q - m_Ixy*p*r;
     pqr_dot_stuff[1] = hpqr[1] + Myb + (m_Izz - m_Ixx)*p*r + m_Ixz*(r*r - p*p) + m_Ixy*q*r - m_Iyz*p*q;
@@ -255,9 +271,16 @@ void aircraft::aircraft_rk4_func(double t, double* y, double* ans)
     // multiply I inv by hpqr
     double* pqr_dot = new double[3];
     matrix_vector_mult_3(m_I_inv, pqr_dot_stuff, pqr_dot);
+    
+    cout << "pqr_dot_stuff[0]" << endl;
+    cout << pqr_dot_stuff[0] << endl;
+    cout << "pqr_dot_stuff[1]" << endl;
+    cout << pqr_dot_stuff[1] << endl;
+    cout << "pqr_dot_stuff[2]" << endl;
+    cout << pqr_dot_stuff[2] << endl;
+    
 
-    //cout << "pqr_dot" << endl;
-    //array_print(pqr_dot, 3);
+   
 
     ans[0]  = (g*Fxb/m_weight) + (g*2.0*(ex*ez - ey*e0)) + (r*v) - (q*w)  ; // udot
     ans[1]  = (g*Fyb/m_weight) + (g*2.0*(ey*ez + ex*e0)) + (p*w) - (r*u); // vdot
@@ -265,8 +288,8 @@ void aircraft::aircraft_rk4_func(double t, double* y, double* ans)
     ans[3]  = pqr_dot[0]; // pdot
     ans[4]  = pqr_dot[1]; // qdot
     ans[5]  = pqr_dot[2]; //  rdot
-    cout << "pqr_dot" << endl;
-    array_print(pqr_dot, 3);
+    //cout << "pqr_dot" << endl;
+    //array_print(pqr_dot, 3);
 
      
     // build quat vectors for first quat mult
@@ -323,7 +346,7 @@ void aircraft::aircraft_rk4(double t0, double* y0, double dt, int size, double* 
     // k2:  
     aircraft_rk4_func(t0 + (0.5 * dt), m_y_temp, dy);
     fprintf(check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11], dy[12]);
-    array_print(dy, 13);
+    //array_print(dy, 13);
     // multiply k2 by dt and then update y_temp
     for (int i = 0; i < size; i++)
     {
@@ -334,7 +357,7 @@ void aircraft::aircraft_rk4(double t0, double* y0, double dt, int size, double* 
     // k3:
     aircraft_rk4_func(t0 + (0.5 * dt), m_y_temp, dy);
     fprintf(check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11], dy[12]);//fprintf(check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11]);
-    array_print(dy, 13);
+    //array_print(dy, 13);
     // multiply k2 by dt and then update y_temp
     for (int i = 0; i < size; i++)
     {  
@@ -346,7 +369,7 @@ void aircraft::aircraft_rk4(double t0, double* y0, double dt, int size, double* 
     aircraft_rk4_func(t0 + dt, m_y_temp, dy);
     fprintf(check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11], dy[12]);//fprintf(check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11]);
     fclose(check_file);
-    array_print(dy, 13);
+    //array_print(dy, 13);
     // multiply k4 by dt   
     for (int i = 0; i < size; i++)
     {
@@ -387,8 +410,8 @@ void aircraft::init_sim()
     m_size = 13;
     m_initial_state = new double[m_size];
     m_initial_state[0]  = sqrt((m_V*m_V - pow(m_V*sin(m_beta), 2))/(1 + pow(tan(m_alpha), 2)));         // u
-    cout << " check init " << endl;
-    cout << setprecision(12) << m_initial_state[0] << endl;
+    //cout << " check init " << endl;
+    //cout << setprecision(12) << m_initial_state[0] << endl;
     m_initial_state[1]  = m_V*sin(m_beta);              // v
     m_initial_state[2]  = m_initial_state[0]*tan(m_alpha);           // w
     m_initial_state[3]  = m_p;              // p
@@ -430,8 +453,8 @@ void aircraft::exercise_6_2()
     fprintf(out_file, "  Time[s]              u[ft/s]            v[ft/s]                w[ft/s]              p[rad/s]             q[rad/s]             r[rad/s]             x[ft]                y[ft]                z[ft]                e0                   ex                   ey                   ez\n");
     
     double t0 = 0.0;
-    cout << "check in exercise" << endl;
-    cout << setprecision(12) << m_initial_state[0] << endl;
+    //cout << "check in exercise" << endl;
+    //cout << setprecision(12) << m_initial_state[0] << endl;
 
     double* y0 = new double[m_size];
     array_copy(m_initial_state, y0, m_size);
@@ -439,6 +462,7 @@ void aircraft::exercise_6_2()
     double* y = new double[m_size];
     do {
         aircraft_rk4(t0, y0, m_time_step, m_size, y);
+        
         
         fprintf(out_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, y0[0], y0[1], y0[2],y0[3],y0[4], y0[5], y0[6], y0[7], y0[8], y0[9], y0[10], y0[11], y0[12]);
         
@@ -451,7 +475,7 @@ void aircraft::exercise_6_2()
         // add time step
         t0 += m_time_step;
 
-    } while (t0 <= 0.1);//  m_total_time);
+    } while (t0 <= 0.3);//  m_total_time);
     //while (t0<0.005);
     
     fclose(out_file);

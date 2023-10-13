@@ -58,4 +58,7 @@ bool matrix_invert_3x3(double a[3][3], double b[3][3]);
 void matrix_vector_mult_3(double rm[3][3], double v[3], double* ans);
 
 void array_print(double* arr, int size);
+
+void array_print_3x3(double arr[3][3]);
+
 #endif

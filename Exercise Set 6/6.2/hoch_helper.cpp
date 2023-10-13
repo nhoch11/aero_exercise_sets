@@ -325,9 +325,9 @@ double* cross(double x1, double y1, double z1, double x2, double y2, double z2)
 }
 
 bool matrix_invert_3x3(double a[3][3], double b[3][3]) {
-    double det = a[0][0]*(a[1][1]*a[2][2] - a[1][2]*a[2][1])
-               - a[0][1]*(a[1][0]*a[2][2] - a[1][2]*a[2][0])
-               + a[0][2]*(a[1][0]*a[2][1] - a[1][1]*a[2][0]);
+double det = a[0][0]*(a[1][1]*a[2][2] - a[1][2]*a[2][1])
+            - a[0][1]*(a[1][0]*a[2][2] - a[1][2]*a[2][0])
+            + a[0][2]*(a[1][0]*a[2][1] - a[1][1]*a[2][0]);
 
     if (det == 0) {
         // The matrix is singular, cannot be inverted
@@ -344,7 +344,7 @@ bool matrix_invert_3x3(double a[3][3], double b[3][3]) {
     b[2][1] = (a[0][1]*a[2][0] - a[0][0]*a[2][1]) / det;
     b[2][2] = (a[0][0]*a[1][1] - a[0][1]*a[1][0]) / det;
 
-    return true;
+return true;
 }
 
 void matrix_vector_mult_3(double rm[3][3], double v[3], double* ans){
@@ -363,3 +363,11 @@ void array_print(double* arr, int size){
     cout<< endl;
 }
 
+void array_print_3x3(double arr[3][3]){
+    for (int i = 0; i < 3; i++){
+        for (int j = 0; j < 3; j++){
+            cout << scientific << setprecision(12) << setw(20) << arr[i][j] << " ";
+        }
+        cout << endl;
+    }
+}
