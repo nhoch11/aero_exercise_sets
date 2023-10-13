@@ -197,6 +197,13 @@ void aircraft::aerodynamics_aircraft(double* y, double* ans)
 
     //cout<< "ans=" << endl;
     //array_print(ans,13);
+
+
+    //calculuate proptulsive thrust
+    // calculate location
+    // cross thrust location by force p
+
+    // get cg shift = moments - (new cg loc x forcexyz)
 }
 
 void aircraft::aircraft_rk4_func(double t, double* y, double* ans)
@@ -230,7 +237,7 @@ void aircraft::aircraft_rk4_func(double t, double* y, double* ans)
     double g = gravity_english(-zf);
 
     // create pqr matrix
-    double* pqr = new double[3];
+    double pqr[3];//] = new double[3];
     pqr[0] = p;
     pqr[1] = q;
     pqr[2] = r;
@@ -258,6 +265,9 @@ void aircraft::aircraft_rk4_func(double t, double* y, double* ans)
     ans[3]  = pqr_dot[0]; // pdot
     ans[4]  = pqr_dot[1]; // qdot
     ans[5]  = pqr_dot[2]; //  rdot
+    cout << "pqr_dot" << endl;
+    array_print(pqr_dot, 3);
+
      
     // build quat vectors for first quat mult
     double* quatA    = new double[4];
@@ -301,7 +311,7 @@ void aircraft::aircraft_rk4(double t0, double* y0, double dt, int size, double* 
     // k1:
     aircraft_rk4_func(t0, y0, dy);
     fprintf(check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11], dy[12]);
-    
+    array_print(dy, 13);
     // multiply k1 by dt 
     for (int i = 0; i < size; i++)
     {
@@ -313,7 +323,7 @@ void aircraft::aircraft_rk4(double t0, double* y0, double dt, int size, double* 
     // k2:  
     aircraft_rk4_func(t0 + (0.5 * dt), m_y_temp, dy);
     fprintf(check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11], dy[12]);
-    
+    array_print(dy, 13);
     // multiply k2 by dt and then update y_temp
     for (int i = 0; i < size; i++)
     {
@@ -324,7 +334,7 @@ void aircraft::aircraft_rk4(double t0, double* y0, double dt, int size, double* 
     // k3:
     aircraft_rk4_func(t0 + (0.5 * dt), m_y_temp, dy);
     fprintf(check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11], dy[12]);//fprintf(check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11]);
-    
+    array_print(dy, 13);
     // multiply k2 by dt and then update y_temp
     for (int i = 0; i < size; i++)
     {  
@@ -336,7 +346,7 @@ void aircraft::aircraft_rk4(double t0, double* y0, double dt, int size, double* 
     aircraft_rk4_func(t0 + dt, m_y_temp, dy);
     fprintf(check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11], dy[12]);//fprintf(check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11]);
     fclose(check_file);
-    
+    array_print(dy, 13);
     // multiply k4 by dt   
     for (int i = 0; i < size; i++)
     {
@@ -413,10 +423,10 @@ void aircraft::init_sim()
         
 }
 
-void aircraft::exercise_6_1()
+void aircraft::exercise_6_2()
 {
 
-    FILE* out_file = fopen("hoch_6_1.txt", "w");
+    FILE* out_file = fopen("hoch_6_2.txt", "w");
     fprintf(out_file, "  Time[s]              u[ft/s]            v[ft/s]                w[ft/s]              p[rad/s]             q[rad/s]             r[rad/s]             x[ft]                y[ft]                z[ft]                e0                   ex                   ey                   ez\n");
     
     double t0 = 0.0;
@@ -441,7 +451,7 @@ void aircraft::exercise_6_1()
         // add time step
         t0 += m_time_step;
 
-    } while (t0 <= m_total_time);
+    } while (t0 <= 0.1);//  m_total_time);
     //while (t0<0.005);
     
     fclose(out_file);

@@ -40,7 +40,8 @@
         "r[deg/s]" : 0.0,
         "heading_angle[deg]" : 0.0,
         "aileron[deg]" : 0.0,
-        "elevator[deg]" : -3.566024357159166,
+        "xelevator[deg]" : -3.566024357159166,
+        "elevator[deg]" : 0.0,
         "rudder[deg]" : 0.0,
         "throttle" : 0.1383896327861029
         },

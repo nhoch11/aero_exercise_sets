@@ -13,7 +13,7 @@ public: // private variables and function can only be accessed inside the class
     ~aircraft(){}; // class destructor (default: releases memory)
     
     void init_sim(); // this will initialize the state vector with initial conditions
-    void exercise_6_1();
+    void exercise_6_2();
 
     
 private:
