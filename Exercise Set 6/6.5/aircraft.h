@@ -13,7 +13,7 @@ public: // private variables and function can only be accessed inside the class
     ~aircraft(){}; // class destructor (default: releases memory)
     
     void init_sim(); // this will initialize the state vector with initial conditions
-    void exercise_6_2();
+    void exercise_6_5();
 
     
 private:
@@ -132,7 +132,7 @@ private:
     double m_thrust_diry;
     double m_thrust_dirz;
 
-    double* m_CG_shift;
+    double m_CG_shift[3];
     double m_CG_shiftx;
     double m_CG_shifty;
     double m_CG_shiftz;

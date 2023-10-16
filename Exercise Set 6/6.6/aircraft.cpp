@@ -201,12 +201,26 @@ void aircraft::aerodynamics_aircraft(double* y, double* ans)
     double sb = sin(beta);
 
     // update forces and moments
-    ans[0] =  -0.5*rho*V*V*m_wing_area*(CD*ca*cb + CS*ca*sb - CL*sa) + tau*pow(rho/m_rho0, m_a)*(m_T0 + m_T1*V + m_T2*V*V); // F_xb
+    ans[0] =  -0.5*rho*V*V*m_wing_area*(CD*ca*cb + CS*ca*sb - CL*sa); // F_xb
     ans[1] =   0.5*rho*V*V*m_wing_area*(CS*cb - CD*sb); // F_yb
     ans[2] =  -0.5*rho*V*V*m_wing_area*(CD*sa*cb + CS*sa*sb + CL*ca); // F_zb
     ans[3] =   0.5*rho*V*V*m_wing_area*m_wing_span*Cl; // 
     ans[4] =   0.5*rho*V*V*m_wing_area*m_cw*Cm; // 
     ans[5] =   0.5*rho*V*V*m_wing_area*m_wing_span*Cn; // 
+
+    // update and add thrust with thrust vector
+    double thrust[3];
+    thrust[0] = tau*pow(rho/m_rho0, m_a)*(m_T0 + m_T1*V + m_T2*V*V);
+    ans[0] += thrust[0];
+    ans[1] += thrust[1];
+    ans[2] += thrust[2];
+    
+    // update moments with CG shift
+    double shift[3];
+    vector_cross_3(m_CG_shift, &ans[0], shift);
+    ans[3] -= shift[0];
+    ans[4] -= shift[1];
+    ans[5] -= shift[2];
 
     //cout<< "ans=" << endl;
     //array_print(ans,13);
@@ -390,7 +404,7 @@ void aircraft::init_sim()
     m_controls[3] = m_dr;
 
 
-    m_CG_shift = new double[3];
+    
     m_CG_shift[0] = m_CG_shiftx;
     m_CG_shift[1] = m_CG_shifty;
     m_CG_shift[2] = m_CG_shiftz;
@@ -404,6 +418,8 @@ void aircraft::init_sim()
     m_thrust_dir[0] = m_thrust_dirx;
     m_thrust_dir[1] = m_thrust_diry;
     m_thrust_dir[2] = m_thrust_dirz;
+
+    vector_normalize_3(m_thrust_dir);
 
     
     m_size = 13;
@@ -445,13 +461,12 @@ void aircraft::init_sim()
         
 }
 
-void aircraft::exercise_6_2()
+void aircraft::exercise_6_6()
 {
     m_check_file = fopen("check_rk4.txt", "w");
     fprintf(m_check_file, "  Time[s]              udot                vdot                 wdot                  pdot               qdot                 rdot                 xdot                  ydot                 zdot                   e0dot                exdot               eydot              ezdot\n");
     
-
-    FILE* out_file = fopen("hoch_6_2.txt", "w");
+    FILE* out_file = fopen("hoch_6_6.txt", "w");
     fprintf(out_file, "  Time[s]              u[ft/s]            v[ft/s]                w[ft/s]              p[rad/s]             q[rad/s]             r[rad/s]             x[ft]                y[ft]                z[ft]                e0                   ex                   ey                   ez\n");
     
     double t0 = 0.0;
@@ -477,10 +492,12 @@ void aircraft::exercise_6_2()
         // add time step
         t0 += m_time_step;
 
-    } while (t0 <= m_total_time); //0.1);//
+    } while (t0 <= m_total_time); //0.1); //
     //while (t0<0.005);
+    
     fclose(m_check_file);
     fclose(out_file);
+    
     
 }
 
