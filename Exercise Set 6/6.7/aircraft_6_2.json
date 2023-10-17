@@ -1,0 +1,86 @@
+{
+    "simulation" : {
+        "time_step[s]" : 0.1,
+        "total_time[s]" : 10.0
+        },
+    "aircraft" : {
+        "wing_area[ft^2]" : 300.0,
+        "wing_span[ft]" : 30.0,
+        "weight[lbf]" : 20500.0,
+        "Ixx[slug-ft^2]" : 9496.0,
+        "Iyy[slug-ft^2]" : 55814.0,
+        "Izz[slug-ft^2]" : 63100.0,
+        "Ixy[slug-ft^2]" : 0.0,
+        "Ixz[slug-ft^2]" : 982.0,
+        "Iyz[slug-ft^2]" : 0.0,
+        "hx[slug-ft^2/s]" : 160.0,
+        "hy[slug-ft^2/s]" : 0.0,
+        "hz[slug-ft^2/s]" : 0.0,
+        "CG_shift[ft]" : [0.0, 0.0, 0.0],
+        
+        "thrust" : {
+            "location[ft]" : [0.0, 0.0, 0.0],
+            "direction" : [1.0, 0.0, 0.0],
+            "T0[lbf]" : 29550,
+            "T1[lbf-s/ft]" : 0.0,
+            "T2[lbf-s^2/ft^2]" : 0.0,
+            "a" : 0.84
+            }
+        },
+
+    "initial" : {
+        "airspeed[ft/s]" : 220.0,
+        "altitude[ft]" : 500.0,
+        "elevation_angle[deg]" : 16.648091483760705,
+        "bank_angle[deg]" : 0.0,
+        "heading_angle[deg]" : 0.0,
+        "alpha[deg]" : 16.64809148376088,
+        "beta[deg]" : 0.0,
+        "p[deg/s]" : 0.0,
+        "q[deg/s]" : 0.0,
+        "r[deg/s]" : 0.0,
+        "aileron[deg]" : 0.0,
+        "xelevator[deg]" : -3.566024357159166,
+        "elevator[deg]" : 0.0,
+        "rudder[deg]" : 0.0,
+        "throttle" : 0.1383896327861029
+        },
+
+    "aerodynamics" : {
+        "CL0" : 0.0535,
+        "CL,a" : 3.84,
+        "CL,qbar" : 27.3,
+        "CL,de" : 0.511,
+        "CS,b" : -1.098,
+        "CS,pbar" : 0.098,
+        "CS,rbar" : 1.121,
+        "CS,da" : 0.078,
+        "CS,dr" : 0.168,
+        "CDL0" : 0.0425,
+        "CD,L" : -0.1154,
+        "CD,L2" : 0.2427,
+        "CD,S2" : 0.788,
+        "CD,qbar" : -1.966,
+        "CD,Lqbar" : 6.183,
+        "CD,de" : -0.02,
+        "CD,Lde" : 0.198,
+        "CD,de2" : 0.352,
+        "Cl,b" : -0.1048,
+        "Cl,pbar" : -0.375,
+        "Cl,rbar" : -0.053,
+        "Cl,Lrbar" : 0.283,
+        "Cl,da" : -0.1172,
+        "Cl,dr" : 0.03,
+        "Cm0" : -0.062,
+        "Cm,a" : 0.087,
+        "Cm,qbar" : -5.9,
+        "Cm,de" : -0.59,
+        "Cn,b" : 0.227,
+        "Cn,pbar" : -0.0075,
+        "Cn,Lpbar" : -0.0338,
+        "Cn,rbar" : -0.467,
+        "Cn,da" : -0.0351,
+        "Cn,Lda" : 0.014,
+        "Cn,dr" : -0.088
+        }
+}

@@ -28,10 +28,12 @@ aircraft::aircraft(string filename)
     m_hx = data["aircraft"]["hx[slug-ft^2/s]"];
     m_hy = data["aircraft"]["hy[slug-ft^2/s]"];
     m_hz = data["aircraft"]["hz[slug-ft^2/s]"];
+
     json CG_shift = data["aircraft"]["CG_shift[ft]"];
     m_CG_shiftx = CG_shift[0];
     m_CG_shifty = CG_shift[1];
     m_CG_shiftz = CG_shift[2];
+
     json thrust_location = data["aircraft"]["thrust"]["location[ft]"];
     m_thrust_locx = thrust_location[0];
     m_thrust_locy = thrust_location[1];
@@ -216,8 +218,8 @@ void aircraft::aerodynamics_aircraft(double* y, double* ans)
     double thrust[3];
 
     thrust[0] = m_thrust_dir[0]*m_thrust_mag;
-    thrust[1] = m_thrust_dir[0]*m_thrust_mag;
-    thrust[2] = m_thrust_dir[0]*m_thrust_mag;
+    thrust[1] = m_thrust_dir[1]*m_thrust_mag;
+    thrust[2] = m_thrust_dir[2]*m_thrust_mag;
 
     ans[0] += thrust[0];
     ans[1] += thrust[1];
@@ -358,8 +360,7 @@ void aircraft::aircraft_rk4(double t0, double* y0, double dt, int size, double* 
     // k1:
     aircraft_rk4_func(t0, y0, dy);
     fprintf(m_check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11], dy[12]);
-    //array_print(dy, 13);
-    // multiply k1 by dt 
+
     for (int i = 0; i < size; i++)
     {
         m_k1[i] = dt * dy[i];
@@ -368,10 +369,9 @@ void aircraft::aircraft_rk4(double t0, double* y0, double dt, int size, double* 
     }
 
     // k2:  
-    aircraft_rk4_func(t0 + (0.5 * dt), m_y_temp, dy);
+    aircraft_rk4_func(t0 + (0.5*dt), m_y_temp, dy);
     fprintf(m_check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11], dy[12]);
-    //array_print(dy, 13);
-    // multiply k2 by dt and then update y_temp
+   
     for (int i = 0; i < size; i++)
     {
         m_k2[i] = dt * dy[i];
@@ -379,10 +379,9 @@ void aircraft::aircraft_rk4(double t0, double* y0, double dt, int size, double* 
     }
     
     // k3:
-    aircraft_rk4_func(t0 + (0.5 * dt), m_y_temp, dy);
+    aircraft_rk4_func(t0 + (0.5*dt), m_y_temp, dy);
     fprintf(m_check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11], dy[12]);//fprintf(check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11]);
-    //array_print(dy, 13);
-    // multiply k2 by dt and then update y_temp
+    
     for (int i = 0; i < size; i++)
     {  
         m_k3[i] = dt * dy[i];
@@ -393,14 +392,13 @@ void aircraft::aircraft_rk4(double t0, double* y0, double dt, int size, double* 
     aircraft_rk4_func(t0 + dt, m_y_temp, dy);
     fprintf(m_check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11], dy[12]);//fprintf(check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11]);
     fprintf(m_check_file, "\n"); 
-    //array_print(dy, 13);
-    // multiply k4 by dt   
+    
     for (int i = 0; i < size; i++)
     {
         m_k4[i] = dt * dy[i];
 
         // find new
-        ans[i] = y0[i] + (m_k1[i] + 2.0 * m_k2[i] + 2.0 * m_k3[i] + m_k4[i]) / 6.0  ;
+        ans[i] = y0[i] + (m_k1[i] + 2.0*m_k2[i] + 2.0*m_k3[i] + m_k4[i])/6.0  ;
     }
     
 }
@@ -435,11 +433,10 @@ void aircraft::init_sim()
     
     m_size = 13;
     m_initial_state = new double[m_size];
-    m_initial_state[0]  = sqrt((m_V*m_V - pow(m_V*sin(m_beta), 2))/(1 + pow(tan(m_alpha), 2)));         // u
-    //cout << " check init " << endl;
-    //cout << setprecision(12) << m_initial_state[0] << endl;
-    m_initial_state[1]  = m_V*sin(m_beta);              // v
-    m_initial_state[2]  = m_initial_state[0]*tan(m_alpha);           // w
+    //m_initial_state[0]  = sqrt((m_V*m_V - pow(m_V*sin(m_beta), 2))/(1 + pow(tan(m_alpha), 2)));       
+    m_initial_state[0]  = m_V*cos(m_alpha)*cos(m_beta);  // u
+    m_initial_state[1]  = m_V*sin(m_beta);               // v
+    m_initial_state[2]  = m_V*sin(m_alpha)*cos(m_beta);  // w
     m_initial_state[3]  = m_p;              // p
     m_initial_state[4]  = m_q;              // q
     m_initial_state[5]  = m_r;              // r
@@ -472,12 +469,12 @@ void aircraft::init_sim()
         
 }
 
-void aircraft::exercise_6_7()
+void aircraft::run_sim()
 {
     m_check_file = fopen("check_rk4.txt", "w");
     fprintf(m_check_file, "  Time[s]              udot                vdot                 wdot                  pdot               qdot                 rdot                 xdot                  ydot                 zdot                   e0dot                exdot               eydot              ezdot\n");
     
-    FILE* out_file = fopen("hoch_6_7.txt", "w");
+    FILE* out_file = fopen("hoch_6_2.txt", "w");
     fprintf(out_file, "  Time[s]              u[ft/s]            v[ft/s]                w[ft/s]              p[rad/s]             q[rad/s]             r[rad/s]             x[ft]                y[ft]                z[ft]                e0                   ex                   ey                   ez\n");
     
     double t0 = 0.0;
