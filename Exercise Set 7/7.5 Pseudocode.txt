@@ -1,0 +1,29 @@
+Psuedo code for trimming a steady coordinated turn given elv angle and bank
+(given phi and theta)
+
+-Set the following values to zero
+    alpha = 0
+    beta  = 0
+    da    = 0
+    de    = 0
+    dr    = 0
+    tau   = 0
+
+    p     = 0
+    q     = 0
+    r     = 0
+
+-MAYBE: calculate elv angle from a given climb angle
+
+-use eq 16.23 to compute rotation rates
+
+- use aerodynamic model to find aerodynamic angles, thrust, 
+and control-surface deflections that satisfy eqs 16.5 and 16.6
+
+-solve for the sys of eqs using newtons method 16.56 and 16.58
+
+- use the updated values for the orientation, angles, thrust, controls, 
+and repeat until the solution converges
+
+
+
