@@ -7,118 +7,52 @@
 aircraft::aircraft(string filename)
 {
     std::ifstream f(filename);
-    json data = json::parse(f);
+    json m_input = json::parse(f);
     
-    // read in json data and assign to existing class attributes
+    // read in json m_input and assign to existing class attributes
     
     // simulation
-    m_time_step = data["simulation"]["time_step[s]"];
-    m_total_time = data["simulation"]["total_time[s]"];
+    m_time_step = m_input["simulation"]["time_step[s]"];
+    m_total_time = m_input["simulation"]["total_time[s]"];
 
     // aircraft
-    m_wing_area = data["aircraft"]["wing_area[ft^2]"];
-    m_wing_span = data["aircraft"]["wing_span[ft]"];
-    m_weight = data["aircraft"]["weight[lbf]"];
-    m_Ixx = data["aircraft"]["Ixx[slug-ft^2]"];
-    m_Iyy = data["aircraft"]["Iyy[slug-ft^2]"];
-    m_Izz = data["aircraft"]["Izz[slug-ft^2]"];
-    m_Ixy = data["aircraft"]["Ixy[slug-ft^2]"];
-    m_Ixz = data["aircraft"]["Ixz[slug-ft^2]"];
-    m_Iyz = data["aircraft"]["Iyz[slug-ft^2]"];
-    m_hx = data["aircraft"]["hx[slug-ft^2/s]"];
-    m_hy = data["aircraft"]["hy[slug-ft^2/s]"];
-    m_hz = data["aircraft"]["hz[slug-ft^2/s]"];
+    m_wing_area = m_input["aircraft"]["wing_area[ft^2]"];
+    m_wing_span = m_input["aircraft"]["wing_span[ft]"];
+    m_weight = m_input["aircraft"]["weight[lbf]"];
+    m_Ixx = m_input["aircraft"]["Ixx[slug-ft^2]"];
+    m_Iyy = m_input["aircraft"]["Iyy[slug-ft^2]"];
+    m_Izz = m_input["aircraft"]["Izz[slug-ft^2]"];
+    m_Ixy = m_input["aircraft"]["Ixy[slug-ft^2]"];
+    m_Ixz = m_input["aircraft"]["Ixz[slug-ft^2]"];
+    m_Iyz = m_input["aircraft"]["Iyz[slug-ft^2]"];
+    m_hx = m_input["aircraft"]["hx[slug-ft^2/s]"];
+    m_hy = m_input["aircraft"]["hy[slug-ft^2/s]"];
+    m_hz = m_input["aircraft"]["hz[slug-ft^2/s]"];
 
-    json CG_shift = data["aircraft"]["CG_shift[ft]"];
+    json CG_shift = m_input["aircraft"]["CG_shift[ft]"];
     m_CG_shiftx = CG_shift[0];
     m_CG_shifty = CG_shift[1];
     m_CG_shiftz = CG_shift[2];
 
-    json thrust_location = data["aircraft"]["thrust"]["location[ft]"];
+    json thrust_location = m_input["aircraft"]["thrust"]["location[ft]"];
     m_thrust_locx = thrust_location[0];
     m_thrust_locy = thrust_location[1];
     m_thrust_locz = thrust_location[2];
-    json thrust_direction = data["aircraft"]["thrust"]["direction"];
+    json thrust_direction = m_input["aircraft"]["thrust"]["direction"];
     m_thrust_dirx = thrust_direction[0];
     m_thrust_diry = thrust_direction[1];
     m_thrust_dirz = thrust_direction[2];
-    m_T0 = data["aircraft"]["thrust"]["T0[lbf]"];
-    m_T1 = data["aircraft"]["thrust"]["T1[lbf-s/ft]"];
-    m_T2 = data["aircraft"]["thrust"]["T2[lbf-s^2/ft^2]"];
-    m_a = data["aircraft"]["thrust"]["a"];
+    m_T0 = m_input["aircraft"]["thrust"]["T0[lbf]"];
+    m_T1 = m_input["aircraft"]["thrust"]["T1[lbf-s/ft]"];
+    m_T2 = m_input["aircraft"]["thrust"]["T2[lbf-s^2/ft^2]"];
+    m_a = m_input["aircraft"]["thrust"]["a"];
 
-    // initial state
-    m_V = data["initial"]["airspeed[ft/s]"];
-    m_altitude = data["initial"]["altitude[ft]"];
-    m_heading = data["initial"]["heading_angle[deg]"];
+    // initial values for needed whether initialized with state or trim
+    m_V = m_input["initial"]["airspeed[ft/s]"];
+    m_altitude = m_input["initial"]["altitude[ft]"];
+    m_heading = m_input["initial"]["heading_angle[deg]"];
     m_heading *= pi/180.0;
-
-    m_type = data["initial"]["type"];
-    json types = data["initial"]["state_types"];
-    
-    if (m_type == types[0]){
-        e
-    } 
-    
-    m_elv_angle = data["initial"]["elevation_angle[deg]"];
-    m_elv_angle = m_elv_angle*pi/180.0;
-    m_bank = data["initial"]["bank_angle[deg]"];
-    m_bank *= pi/180.0;
-    m_alpha = data["initial"]["alpha[deg]"];
-    m_alpha *= pi/180.0;
-    m_beta = data["initial"]["beta[deg]"];
-    m_beta *= pi/180.0;
-    m_p = data["initial"]["p[deg/s]"];
-    m_p *= pi/180.0;
-    m_q = data["initial"]["q[deg/s]"];
-    m_q *= pi/180.0;
-    m_r = data["initial"]["r[deg/s]"];
-    m_r *= pi/180.0;
-    
-    m_da = data["initial"]["aileron[deg]"];
-    m_da *= pi/180.0;
-    m_de = data["initial"]["elevator[deg]"];
-    m_de *= pi/180.0;
-    m_dr = data["initial"]["rudder[deg]"];
-    m_dr *= pi/180.0;
-    m_throttle = data["initial"]["throttle"];
-
-    // aerodynamics
-    m_CL0 = data["aerodynamics"]["CL0"];
-    m_CL_a = data["aerodynamics"]["CL,a"];
-    m_CL_qbar = data["aerodynamics"]["CL,qbar"];
-    m_CL_de = data["aerodynamics"]["CL,de"];
-    m_CS_b = data["aerodynamics"]["CS,b"];
-    m_CS_pbar = data["aerodynamics"]["CS,pbar"];
-    m_CS_rbar = data["aerodynamics"]["CS,rbar"];
-    m_CS_da = data["aerodynamics"]["CS,da"];
-    m_CS_dr = data["aerodynamics"]["CS,dr"];
-    m_CDL0 = data["aerodynamics"]["CDL0"];
-    m_CD_L = data["aerodynamics"]["CD,L"];
-    m_CD_L2 = data["aerodynamics"]["CD,L2"];
-    m_CD_S2 = data["aerodynamics"]["CD,S2"];
-    m_CD_qbar = data["aerodynamics"]["CD,qbar"];
-    m_CD_Lqbar = data["aerodynamics"]["CD,Lqbar"];
-    m_CD_de = data["aerodynamics"]["CD,de"];
-    m_CD_Lde = data["aerodynamics"]["CD,Lde"];
-    m_CD_de2 = data["aerodynamics"]["CD,de2"];
-    m_Cl_b = data["aerodynamics"]["Cl,b"];
-    m_Cl_pbar = data["aerodynamics"]["Cl,pbar"];
-    m_Cl_rbar = data["aerodynamics"]["Cl,rbar"];
-    m_Cl_Lrbar = data["aerodynamics"]["Cl,Lrbar"];
-    m_Cl_da = data["aerodynamics"]["Cl,da"];
-    m_Cl_dr = data["aerodynamics"]["Cl,dr"];
-    m_Cm0 = data["aerodynamics"]["Cm0"];
-    m_Cm_a = data["aerodynamics"]["Cm,a"];
-    m_Cm_qbar = data["aerodynamics"]["Cm,qbar"];
-    m_Cm_de = data["aerodynamics"]["Cm,de"];
-    m_Cn_b = data["aerodynamics"]["Cn,b"];
-    m_Cn_pbar = data["aerodynamics"]["Cn,pbar"];
-    m_Cn_Lpbar = data["aerodynamics"]["Cn,Lpbar"];
-    m_Cn_rbar = data["aerodynamics"]["Cn,rbar"];
-    m_Cn_da = data["aerodynamics"]["Cn,da"];
-    m_Cn_Lda = data["aerodynamics"]["Cn,Lda"];
-    m_Cn_dr = data["aerodynamics"]["Cn,dr"];
+ 
     
     // some calcs
     m_cw = m_wing_area/m_wing_span;
@@ -159,7 +93,147 @@ aircraft::aircraft(string filename)
 
     //cout << "h" << endl;
     //array_print_3x3(m_h);
+
+     // aerodynamics
+    m_CL0 = m_input["aerodynamics"]["CL0"];
+    m_CL_a = m_input["aerodynamics"]["CL,a"];
+    m_CL_qbar = m_input["aerodynamics"]["CL,qbar"];
+    m_CL_de = m_input["aerodynamics"]["CL,de"];
+    m_CS_b = m_input["aerodynamics"]["CS,b"];
+    m_CS_pbar = m_input["aerodynamics"]["CS,pbar"];
+    m_CS_rbar = m_input["aerodynamics"]["CS,rbar"];
+    m_CS_da = m_input["aerodynamics"]["CS,da"];
+    m_CS_dr = m_input["aerodynamics"]["CS,dr"];
+    m_CDL0 = m_input["aerodynamics"]["CDL0"];
+    m_CD_L = m_input["aerodynamics"]["CD,L"];
+    m_CD_L2 = m_input["aerodynamics"]["CD,L2"];
+    m_CD_S2 = m_input["aerodynamics"]["CD,S2"];
+    m_CD_qbar = m_input["aerodynamics"]["CD,qbar"];
+    m_CD_Lqbar = m_input["aerodynamics"]["CD,Lqbar"];
+    m_CD_de = m_input["aerodynamics"]["CD,de"];
+    m_CD_Lde = m_input["aerodynamics"]["CD,Lde"];
+    m_CD_de2 = m_input["aerodynamics"]["CD,de2"];
+    m_Cl_b = m_input["aerodynamics"]["Cl,b"];
+    m_Cl_pbar = m_input["aerodynamics"]["Cl,pbar"];
+    m_Cl_rbar = m_input["aerodynamics"]["Cl,rbar"];
+    m_Cl_Lrbar = m_input["aerodynamics"]["Cl,Lrbar"];
+    m_Cl_da = m_input["aerodynamics"]["Cl,da"];
+    m_Cl_dr = m_input["aerodynamics"]["Cl,dr"];
+    m_Cm0 = m_input["aerodynamics"]["Cm0"];
+    m_Cm_a = m_input["aerodynamics"]["Cm,a"];
+    m_Cm_qbar = m_input["aerodynamics"]["Cm,qbar"];
+    m_Cm_de = m_input["aerodynamics"]["Cm,de"];
+    m_Cn_b = m_input["aerodynamics"]["Cn,b"];
+    m_Cn_pbar = m_input["aerodynamics"]["Cn,pbar"];
+    m_Cn_Lpbar = m_input["aerodynamics"]["Cn,Lpbar"];
+    m_Cn_rbar = m_input["aerodynamics"]["Cn,rbar"];
+    m_Cn_da = m_input["aerodynamics"]["Cn,da"];
+    m_Cn_Lda = m_input["aerodynamics"]["Cn,Lda"];
+    m_Cn_dr = m_input["aerodynamics"]["Cn,dr"];
+
+    init_sim()  
     
+}
+
+void aircraft::init_sim()
+{
+    if (m_input["initial"]["type"] == "state"){
+        init_from_state();
+    }
+    else {
+        init_from_trim();
+    }
+
+}
+
+void aircraft::init_from_state(){
+
+    m_elv_angle = m_input["initial"]["elevation_angle[deg]"];
+    m_elv_angle = m_elv_angle*pi/180.0;
+    m_bank = m_input["initial"]["bank_angle[deg]"];
+    m_bank *= pi/180.0;
+    m_alpha = m_input["initial"]["alpha[deg]"];
+    m_alpha *= pi/180.0;
+    m_beta = m_input["initial"]["beta[deg]"];
+    m_beta *= pi/180.0;
+    m_p = m_input["initial"]["p[deg/s]"];
+    m_p *= pi/180.0;
+    m_q = m_input["initial"]["q[deg/s]"];
+    m_q *= pi/180.0;
+    m_r = m_input["initial"]["r[deg/s]"];
+    m_r *= pi/180.0;
+    
+    m_throttle = m_input["initial"]["state"]["throttle"];
+    m_da = m_input["initial"]["state"]["aileron[deg]"];
+    m_de = m_input["initial"]["state"]["elevator[deg]"];
+    m_dr = m_input["initial"]["state"]["rudder[deg]"]; 
+
+
+    m_controls = new double[4];
+    m_controls[0] = m_throttle;
+    m_controls[1] = m_da;
+    m_controls[2] = m_de;
+    m_controls[3] = m_dr;
+
+
+    
+    m_CG_shift[0] = m_CG_shiftx;
+    m_CG_shift[1] = m_CG_shifty;
+    m_CG_shift[2] = m_CG_shiftz;
+    
+    m_thrust_loc = new double[3];
+    m_thrust_loc[0] = m_thrust_locx;
+    m_thrust_loc[1] = m_thrust_locy;
+    m_thrust_loc[2] = m_thrust_locz;
+    
+    m_thrust_dir = new double[3];
+    m_thrust_dir[0] = m_thrust_dirx;
+    m_thrust_dir[1] = m_thrust_diry;
+    m_thrust_dir[2] = m_thrust_dirz;
+
+    vector_normalize_3(m_thrust_dir);
+
+    
+    m_size = 13;
+    m_initial_state = new double[m_size];
+    //m_initial_state[0]  = sqrt((m_V*m_V - pow(m_V*sin(m_beta), 2))/(1 + pow(tan(m_alpha), 2)));       
+    m_initial_state[0]  = m_V*cos(m_alpha)*cos(m_beta);  // u
+    m_initial_state[1]  = m_V*sin(m_beta);               // v
+    m_initial_state[2]  = m_V*sin(m_alpha)*cos(m_beta);  // w
+    m_initial_state[3]  = m_p;              // p
+    m_initial_state[4]  = m_q;              // q
+    m_initial_state[5]  = m_r;              // r
+    m_initial_state[6]  = 0.0;              // xf
+    m_initial_state[7]  = 0.0;              // yf
+    m_initial_state[8]  = -m_altitude;      // zf
+    m_initial_state[9]  = m_bank;           // phi
+    m_initial_state[10] = m_elv_angle;      // theta
+    m_initial_state[11] = m_heading;        // psi
+
+    // convert phi, theta, and psi to a quat
+    double* quat = new double[4];
+    euler_to_quat(&m_initial_state[9], quat);
+
+    // normalize the quat
+    quat_norm(quat);
+
+    // store the quat in y0
+    m_initial_state[9] = quat[0];
+    m_initial_state[10] = quat[1];
+    m_initial_state[11] = quat[2];
+    m_initial_state[12] = quat[3];
+
+    double t0 = 0.0;
+    //print results in a file
+    FILE* init_file = fopen("initial_state.txt", "w");
+    fprintf(init_file, "Initial State\n");
+    fprintf(init_file, "  Time[s]              u[ft/s]            v[ft/s]                w[ft/s]              p[rad/s]             q[rad/s]             r[rad/s]             x[ft]                y[ft]                z[ft]                e0                   ex                   ey                   ez\n");
+    fprintf(init_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, m_initial_state[0], m_initial_state[1], m_initial_state[2],m_initial_state[3],m_initial_state[4], m_initial_state[5], m_initial_state[6], m_initial_state[7], m_initial_state[8], m_initial_state[9], m_initial_state[10], m_initial_state[11], m_initial_state[12]);
+        
+}
+
+void aircraft::init_from_trim(){
+
 }
 
 void aircraft::aerodynamics_aircraft(double* y, double* ans)
@@ -259,7 +333,7 @@ void aircraft::aircraft_rk4_func(double t, double* y, double* ans)
 {
 
     double* FM = new double[6];
-    // update aerodynamic data
+    // update aerodynamic m_input
     aerodynamics_aircraft(y, FM);
     double Fxb = FM[0];
     double Fyb = FM[1];
@@ -412,78 +486,6 @@ void aircraft::aircraft_rk4(double t0, double* y0, double dt, int size, double* 
     
 }
 
-void aircraft::init_sim()
-{
-    
-
-
-
-    m_controls = new double[4];
-    m_controls[0] = m_throttle;
-    m_controls[1] = m_da;
-    m_controls[2] = m_de;
-    m_controls[3] = m_dr;
-
-
-    
-    m_CG_shift[0] = m_CG_shiftx;
-    m_CG_shift[1] = m_CG_shifty;
-    m_CG_shift[2] = m_CG_shiftz;
-    
-    m_thrust_loc = new double[3];
-    m_thrust_loc[0] = m_thrust_locx;
-    m_thrust_loc[1] = m_thrust_locy;
-    m_thrust_loc[2] = m_thrust_locz;
-    
-    m_thrust_dir = new double[3];
-    m_thrust_dir[0] = m_thrust_dirx;
-    m_thrust_dir[1] = m_thrust_diry;
-    m_thrust_dir[2] = m_thrust_dirz;
-
-    vector_normalize_3(m_thrust_dir);
-
-    
-    m_size = 13;
-    m_initial_state = new double[m_size];
-    //m_initial_state[0]  = sqrt((m_V*m_V - pow(m_V*sin(m_beta), 2))/(1 + pow(tan(m_alpha), 2)));       
-    m_initial_state[0]  = m_V*cos(m_alpha)*cos(m_beta);  // u
-    m_initial_state[1]  = m_V*sin(m_beta);               // v
-    m_initial_state[2]  = m_V*sin(m_alpha)*cos(m_beta);  // w
-    m_initial_state[3]  = m_p;              // p
-    m_initial_state[4]  = m_q;              // q
-    m_initial_state[5]  = m_r;              // r
-    m_initial_state[6]  = 0.0;              // xf
-    m_initial_state[7]  = 0.0;              // yf
-    m_initial_state[8]  = -m_altitude;      // zf
-    m_initial_state[9]  = m_bank;           // phi
-    m_initial_state[10] = m_elv_angle;      // theta
-    m_initial_state[11] = m_heading;        // psi
-
-    // convert phi, theta, and psi to a quat
-    double* quat = new double[4];
-    euler_to_quat(&m_initial_state[9], quat);
-
-    // normalize the quat
-    quat_norm(quat);
-
-    // store the quat in y0
-    m_initial_state[9] = quat[0];
-    m_initial_state[10] = quat[1];
-    m_initial_state[11] = quat[2];
-    m_initial_state[12] = quat[3];
-
-    double t0 = 0.0;
-    //print results in a file
-    FILE* init_file = fopen("initial_state.txt", "w");
-    fprintf(init_file, "Initial State\n");
-    fprintf(init_file, "  Time[s]              u[ft/s]            v[ft/s]                w[ft/s]              p[rad/s]             q[rad/s]             r[rad/s]             x[ft]                y[ft]                z[ft]                e0                   ex                   ey                   ez\n");
-    fprintf(init_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, m_initial_state[0], m_initial_state[1], m_initial_state[2],m_initial_state[3],m_initial_state[4], m_initial_state[5], m_initial_state[6], m_initial_state[7], m_initial_state[8], m_initial_state[9], m_initial_state[10], m_initial_state[11], m_initial_state[12]);
-        
-}
-
-void aircraft::trim(){
-
-}
 
 void aircraft::run_sim()
 {

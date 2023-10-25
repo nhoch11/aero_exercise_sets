@@ -13,7 +13,6 @@ public: // private variables and function can only be accessed inside the class
     ~aircraft(){}; // class destructor (default: releases memory)
     
     void init_sim(); // this will initialize the state vector with initial conditions
-    void trim();
     void run_sim();
 
     
@@ -27,6 +26,8 @@ private:
     FILE* m_check_file;
 
     // declare json variables
+    json m_input;
+
     //simulation
     double m_time_step;
     double m_total_time;
@@ -148,8 +149,9 @@ private:
 
     void aircraft_rk4(double t0, double* y0, double dt, int size, double* ans);
 
-    
-    
+    void init_from_state();
+
+    void init_from_trim();
 
     
 

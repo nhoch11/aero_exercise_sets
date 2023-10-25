@@ -300,15 +300,6 @@ void aircraft::aircraft_rk4_func(double t, double* y, double* ans)
     double* pqr_dot = new double[3];
     matrix_vector_mult_3(m_I_inv, pqr_dot_stuff, pqr_dot);
     
-    // cout << "pqr_dot_stuff[0]" << endl;
-    // cout << pqr_dot_stuff[0] << endl;
-    // cout << "pqr_dot_stuff[1]" << endl;
-    // cout << pqr_dot_stuff[1] << endl;
-    // cout << "pqr_dot_stuff[2]" << endl;
-    // cout << pqr_dot_stuff[2] << endl;
-    
-
-   
 
     ans[0]  = (g*Fxb/m_weight) + (g*2.0*(ex*ez - ey*e0)) + (r*v) - (q*w)  ; // udot
     ans[1]  = (g*Fyb/m_weight) + (g*2.0*(ey*ez + ex*e0)) + (p*w) - (r*u); // vdot
@@ -316,9 +307,9 @@ void aircraft::aircraft_rk4_func(double t, double* y, double* ans)
     ans[3]  = pqr_dot[0]; // pdot
     ans[4]  = pqr_dot[1]; // qdot
     ans[5]  = pqr_dot[2]; //  rdot
+
     //cout << "pqr_dot" << endl;
     //array_print(pqr_dot, 3);
-
      
     // build quat vectors for first quat mult
     double* quatA    = new double[4];
@@ -352,56 +343,82 @@ void aircraft::aircraft_rk4_func(double t, double* y, double* ans)
     
 }
 
+
 void aircraft::aircraft_rk4(double t0, double* y0, double dt, int size, double* ans)
 {
+    aircraft_rk4_func(t0, y0, m_k1);
+    fprintf(m_check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, m_k1[0], m_k1[1], m_k1[2],m_k1[3],m_k1[4], m_k1[5], m_k1[6], m_k1[7], m_k1[8], m_k1[9], m_k1[10], m_k1[11], m_k1[12]);
+
+    for (int i=0; i<size; i++) {ans[i] = y0[i] + 0.5*dt*m_k1[i];}
+    
+    aircraft_rk4_func(t0+0.5*dt, ans, m_k2);
+    fprintf(m_check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, m_k2[0], m_k2[1], m_k2[2],m_k2[3],m_k2[4], m_k2[5], m_k2[6], m_k2[7], m_k2[8], m_k2[9], m_k2[10], m_k2[11], m_k2[12]);
+
+    for (int i=0; i<size; i++) {ans[i] = y0[i] + 0.5*dt*m_k2[i];}
+
+    aircraft_rk4_func(t0+0.5*dt, ans, m_k3);
+    fprintf(m_check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, m_k3[0], m_k3[1], m_k3[2],m_k3[3],m_k3[4], m_k3[5], m_k3[6], m_k3[7], m_k3[8], m_k3[9], m_k3[10], m_k3[11], m_k3[12]);
+
+    for (int i=0; i<size; i++) {ans[i] = y0[i] + dt*m_k3[i];}
+
+    aircraft_rk4_func(t0+dt, ans, m_k4);
+    fprintf(m_check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, m_k4[0], m_k4[1], m_k4[2],m_k4[3],m_k4[4], m_k4[5], m_k4[6], m_k4[7], m_k4[8], m_k4[9], m_k4[10], m_k4[11], m_k4[12]);
+
+    for (int i=0; i<size; i++){ans[i] = y0[i] + dt/6.0*(m_k1[i] + 2.0*m_k2[i] + 2.0*m_k3[i] + m_k4[i]);}
+    
+    fprintf(m_check_file, "\n"); 
+}
+//void aircraft::aircraft_rk4(double t0, double* y0, double dt, int size, double* ans)
+//{
     // print first function calls in check file
     
-    double* dy = new double[size];
-    // k1:
-    aircraft_rk4_func(t0, y0, dy);
-    fprintf(m_check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11], dy[12]);
+//     double* dy = new double[size];
+//     // k1:
+//     aircraft_rk4_func(t0, y0, dy);
+//     fprintf(m_check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11], dy[12]);
 
-    for (int i = 0; i < size; i++)
-    {
-        m_k1[i] = dt * dy[i];
-        // use k1 to update y_temporary
-        m_y_temp[i] = y0[i] + 0.5 * m_k1[i];
-    }
+//     for (int i = 0; i < size; i++)
+//     {
+//         m_k1[i] = dt * dy[i];
+//         // use k1 to update y_temporary
+//         m_y_temp[i] = y0[i] + 0.5 * m_k1[i];
+//     }
 
-    // k2:  
-    aircraft_rk4_func(t0 + (0.5*dt), m_y_temp, dy);
-    fprintf(m_check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11], dy[12]);
+//     // k2:  
+//     aircraft_rk4_func(t0 + (0.5*dt), m_y_temp, dy);
+//     fprintf(m_check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11], dy[12]);
    
-    for (int i = 0; i < size; i++)
-    {
-        m_k2[i] = dt * dy[i];
-        m_y_temp[i] = y0[i] + (0.5 * m_k2[i]);
-    }
+//     for (int i = 0; i < size; i++)
+//     {
+//         m_k2[i] = dt * dy[i];
+//         m_y_temp[i] = y0[i] + (0.5 * m_k2[i]);
+//     }
     
-    // k3:
-    aircraft_rk4_func(t0 + (0.5*dt), m_y_temp, dy);
-    fprintf(m_check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11], dy[12]);//fprintf(check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11]);
+//     // k3:
+//     aircraft_rk4_func(t0 + (0.5*dt), m_y_temp, dy);
+//     fprintf(m_check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11], dy[12]);//fprintf(check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11]);
     
-    for (int i = 0; i < size; i++)
-    {  
-        m_k3[i] = dt * dy[i];
-        m_y_temp[i] = y0[i] + m_k3[i];
-    }
+//     for (int i = 0; i < size; i++)
+//     {  
+//         m_k3[i] = dt * dy[i];
+//         m_y_temp[i] = y0[i] + m_k3[i];
+//     }
     
-    // k4:
-    aircraft_rk4_func(t0 + dt, m_y_temp, dy);
-    fprintf(m_check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11], dy[12]);//fprintf(check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11]);
-    fprintf(m_check_file, "\n"); 
-    
-    for (int i = 0; i < size; i++)
-    {
-        m_k4[i] = dt * dy[i];
+//     // k4:
+//     aircraft_rk4_func(t0 + dt, m_y_temp, dy);
 
-        // find new
-        ans[i] = y0[i] + (m_k1[i] + 2.0*m_k2[i] + 2.0*m_k3[i] + m_k4[i])/6.0  ;
-    }
+//     fprintf(m_check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11], dy[12]);//fprintf(check_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, dy[0], dy[1], dy[2],dy[3],dy[4], dy[5], dy[6], dy[7], dy[8], dy[9], dy[10], dy[11]);
+//     fprintf(m_check_file, "\n"); 
     
-}
+//     for (int i = 0; i < size; i++)
+//     {
+//         m_k4[i] = dt * dy[i];
+
+//         // find new
+//         ans[i] = y0[i] + (m_k1[i] + 2.0*m_k2[i] + 2.0*m_k3[i] + m_k4[i])/6.0  ;
+//     }
+    
+// }
 
 void aircraft::init_sim()
 {
