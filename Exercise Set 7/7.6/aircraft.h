@@ -56,7 +56,7 @@ private:
     double m_V;
     double m_altitude;
     double m_elv_angle;
-    double m_bank;
+    double m_bank_angle;
     double m_alpha;
     double m_beta;
     double m_p;
@@ -68,6 +68,17 @@ private:
     double m_dr;
     double m_throttle;
 
+    // initial trim
+    string m_trim_type;
+    double m_climb_angle;
+    double m_sideslip_angle;
+
+    double m_finite_diff_step;
+    double m_relaxation;
+    double m_tol;
+    int m_max_iter;
+    bool m_verbose;
+
     // aerodynamics
     double m_CL0;
     double m_CL_a;
@@ -75,6 +86,7 @@ private:
     double m_CL_de;
     double m_CS_b;
     double m_CS_pbar;
+    double m_CS_Lpbar;
     double m_CS_rbar;
     double m_CS_da;
     double m_CS_dr;
@@ -119,40 +131,36 @@ private:
     double* m_k2 = new double[12];
     double* m_k3 = new double[12];
     double* m_k4 = new double[12];
-    double* m_y_temp = new double[12];
 
     // create controls vector
     double* m_controls;
 
     double m_thrust_mag;
 
-    double* m_thrust_loc;
-    double m_thrust_locx;
-    double m_thrust_locy;
-    double m_thrust_locz;
+    double m_thrust_loc[3];
 
-    double* m_thrust_dir;
-    double m_thrust_dirx;
-    double m_thrust_diry;
-    double m_thrust_dirz;
+
+    double m_thrust_dir[3];
 
     double m_CG_shift[3];
-    double m_CG_shiftx;
-    double m_CG_shifty;
-    double m_CG_shiftz;
+    
 
 
     // functions;
+
+    void init_from_state();
+
+    void init_from_trim();
+
+    void calc_R();
+
     void aerodynamics_aircraft(double* y, double* ans);
 
     void aircraft_rk4_func(double t, double* y, double* ans);
 
     void aircraft_rk4(double t0, double* y0, double dt, int size, double* ans);
 
-    void init_from_state();
-
-    void init_from_trim();
-
+    
     
 
 };
