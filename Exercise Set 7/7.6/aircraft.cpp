@@ -324,9 +324,6 @@ void aircraft::aerodynamics_aircraft(double* y, double* ans)
     ans[4] -= shift[1];
     ans[5] -= shift[2];
 
-       
-
-
 }
 
 void aircraft::aircraft_rk4_func(double t, double* y, double* ans)
