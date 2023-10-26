@@ -223,7 +223,7 @@ void aircraft::init_from_state(){
 }
 
 void aircraft::init_from_trim(){
-    double error, sp, cp, st, ct, pqr_constant, grav;
+    double Rmax, sp, cp, st, ct, pqr_constant, grav;
     double G[6];
     double R_up[6], R_down[6];
     double J[6][6];
@@ -255,6 +255,14 @@ void aircraft::init_from_trim(){
     m_controls[2] = 0.0;    // de
     m_controls[3] = 0.0;    // dr
 
+    // build G vector
+    G[0] = m_alpha;
+    G[1] = m_beta;
+    G[2] = m_controls[0]; // da
+    G[3] = m_controls[1]; // de
+    G[4] = m_controls[2]; // dr
+    G[5] = m_controls[3]; // tau
+
     // step 2: initalize p q r = 0
     m_trim_state[3] = 0.0;  // p
     m_trim_state[4] = 0.0;  // q
@@ -265,37 +273,17 @@ void aircraft::init_from_trim(){
         // requires bank angle and requires elv or climb angle
 
         // init error
-        error = 1.0;
+        Rmax = 0.0;
         do {
-            // step 4: Calculate the body-fixed velocities from Eq. (14.9) for the traditional definition of sideslip
-            m_trim_state[0] = m_V*cos(m_alpha)*cos(m_beta); // u
-            m_trim_state[1] = m_V*sin(m_beta);              // v
-            m_trim_state[2] = m_V*sin(m_alpha)*cos(m_beta); // w
-
-            // step 7: For the case of a steady-coordinated turn, use Eq. (16.40) to compute the rotation rates.
-            grav = gravity_english(m_altitude);
-            sp = sin(m_bank_angle);
-            cp = cos(m_bank_angle);
-            st = sin(m_elv_angle);
-            ct = cos(m_elv_angle);
-
-            pqr_constant = grav*sp*ct/(m_trim_state[0]*ct*cp + m_trim_state[2]*st);
-            m_trim_state[3] = -pqr_constant*st;    // p
-            m_trim_state[4] = pqr_constant*sp*ct;  // q
-            m_trim_state[5] = pqr_constant*cp*ct;  // r
-
             // step 9: use the aerodynamic model or database to find the aerodynamic angles, thrust, and
             // control-surface deflections that satisfy Eqs. (16.5) and (16.6).
             
-            // build G vector
-            G[0] = m_alpha;
-            G[1] = m_beta;
-            G[2] = m_controls[0]; // da
-            G[3] = m_controls[1]; // de
-            G[4] = m_controls[2]; // dr
-            G[5] = m_controls[3]; // tau
+            // get R unperturbed
+            R = calc(R);
 
+            // build Jacobian
             for (int i = 0; i < 6; i++){
+                
                 // step up
                 G[i] += m_finite_diff_step;
 
@@ -319,13 +307,15 @@ void aircraft::init_from_trim(){
         
 
             // solve for delta G
+            double delta_G[6] ;
+            matrix_AxB_solve();
 
             // step G with relaxation factor
 
             // calc error
 
 
-        } while ( error > m_tol);
+        } while ( Rmax > m_tol); // while stop is false
 
 
         
@@ -337,8 +327,30 @@ void aircraft::init_from_trim(){
 
 }
 
-void aircraft::calc_R(double G[6], double* phi, double R[6]){
+void aircraft::calc_R(double G[6], double y, double* phi, double R[6]){
 
+    // step 4: Calculate the body-fixed velocities from Eq. (14.9) for the traditional definition of sideslip
+    m_trim_state[0] = m_V*cos(m_alpha)*cos(m_beta); // u
+    m_trim_state[1] = m_V*sin(m_beta);              // v
+    m_trim_state[2] = m_V*sin(m_alpha)*cos(m_beta); // w
+
+    // step 7: For the case of a steady-coordinated turn, use Eq. (16.40) to compute the rotation rates.
+    grav = gravity_english(m_altitude);// 
+    sp = sin(m_bank_angle);
+    cp = cos(m_bank_angle);
+    st = sin(m_elv_angle);
+    ct = cos(m_elv_angle);
+
+    pqr_constant = grav*sp*ct/(m_trim_state[0]*ct*cp + m_trim_state[2]*st);
+    m_trim_state[3] = -pqr_constant*st;    // p
+    m_trim_state[4] = pqr_constant*sp*ct;  // q
+    m_trim_state[5] = pqr_constant*cp*ct;  // r
+
+    // update y
+
+    // call calc aero
+
+    //put FM in the following
     R[0] = ;
     R[1] = ;
     R[2] = ;
