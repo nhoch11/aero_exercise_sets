@@ -153,7 +153,7 @@ private:
 
     void init_from_trim();
 
-    void calc_R();
+    void calc_R(double G[6], double* phi, double R[6]);
 
     void aerodynamics_aircraft(double* y, double* ans);
 

@@ -225,6 +225,8 @@ void aircraft::init_from_state(){
 void aircraft::init_from_trim(){
     double error, sp, cp, st, ct, pqr_constant, grav;
     double G[6];
+    double R_up[6], R_down[6];
+    double J[6][6];
 
     // read in json values
     m_trim_type = m_input["initial"]["trim"]["type"];
@@ -278,14 +280,49 @@ void aircraft::init_from_trim(){
             ct = cos(m_elv_angle);
 
             pqr_constant = grav*sp*ct/(m_trim_state[0]*ct*cp + m_trim_state[2]*st);
-            m_trim_state[3] = -pqr_constant*st;
-            m_trim_state[4] = pqr_constant*sp*ct;
-            m_trim_state[5] = pqr_constant*cp*ct;
+            m_trim_state[3] = -pqr_constant*st;    // p
+            m_trim_state[4] = pqr_constant*sp*ct;  // q
+            m_trim_state[5] = pqr_constant*cp*ct;  // r
 
             // step 9: use the aerodynamic model or database to find the aerodynamic angles, thrust, and
             // control-surface deflections that satisfy Eqs. (16.5) and (16.6).
+            
             // build G vector
-            G[0] = ;
+            G[0] = m_alpha;
+            G[1] = m_beta;
+            G[2] = m_controls[0]; // da
+            G[3] = m_controls[1]; // de
+            G[4] = m_controls[2]; // dr
+            G[5] = m_controls[3]; // tau
+
+            for (int i = 0; i < 6; i++){
+                // step up
+                G[i] += m_finite_diff_step;
+
+                // calc R_up
+                calc_R(G, &m_trim_state[9], R_up);
+                
+                // step down
+                G[i] -= 2*m_finite_diff_step;
+
+                // calc R_down
+                calc_R(G, &m_trim_state[9], R_down);
+
+                // update column
+                for (int j = 0; j < 6; j++){
+                    J[j][i] = (R_up[j] - R_down[j])/(2*m_finite_diff_step);
+                }
+
+                // put G back to normal
+                G[i] += m_finite_diff_step;
+            }
+        
+
+            // solve for delta G
+
+            // step G with relaxation factor
+
+            // calc error
 
 
         } while ( error > m_tol);
@@ -300,7 +337,15 @@ void aircraft::init_from_trim(){
 
 }
 
-void aircraft::calc_R(){
+void aircraft::calc_R(double G[6], double* phi, double R[6]){
+
+    R[0] = ;
+    R[1] = ;
+    R[2] = ;
+    R[3] = ;
+    R[4] = ;
+    R[5] = ;
+    
 
 }
 
