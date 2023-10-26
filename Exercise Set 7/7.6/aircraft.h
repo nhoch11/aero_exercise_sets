@@ -22,6 +22,7 @@ private:
     Atmosphere m_atm;
 
     double* m_initial_state;
+    double* m_trim_state;
     int m_size;
     FILE* m_check_file;
 

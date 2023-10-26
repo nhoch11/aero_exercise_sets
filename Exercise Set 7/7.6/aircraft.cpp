@@ -181,16 +181,12 @@ void aircraft::init_from_state(){
 
 
     m_controls = new double[4];
-    m_controls[0] = m_throttle;
-    m_controls[1] = m_da;
-    m_controls[2] = m_de;
-    m_controls[3] = m_dr;
-
-
+    m_controls[0] = m_da;
+    m_controls[1] = m_de;
+    m_controls[2] = m_dr;
+    m_controls[3] = m_throttle;    
     
-    
-    m_initial_state = new double[m_size];
-    //m_initial_state[0]  = sqrt((m_V*m_V - pow(m_V*sin(m_beta), 2))/(1 + pow(tan(m_alpha), 2)));       
+    m_initial_state = new double[m_size];      
     m_initial_state[0]  = m_V*cos(m_alpha)*cos(m_beta);  // u
     m_initial_state[1]  = m_V*sin(m_beta);               // v
     m_initial_state[2]  = m_V*sin(m_alpha)*cos(m_beta);  // w
@@ -227,6 +223,10 @@ void aircraft::init_from_state(){
 }
 
 void aircraft::init_from_trim(){
+    double error, sp, cp, st, ct, pqr_constant, grav;
+    double G[6];
+
+    // read in json values
     m_trim_type = m_input["initial"]["trim"]["type"];
     m_elv_angle = m_input["initial"]["trim"]["elevation_angle[deg]"];
     m_elv_angle = m_elv_angle*pi/180.0;
@@ -240,17 +240,58 @@ void aircraft::init_from_trim(){
     m_max_iter = m_input["initial"]["trim"]["solver"]["max_iterations"];
     m_verbose = m_input["initial"]["trim"]["solver"]["verbose"];
 
-    // build G vector
-    double G[6];
-    G[0] = ;
+    // initialize trim state vector
+    m_trim_state = new double[m_size];
 
+    // step 1: initialize alpha, beta, da, de, dr, tau = 0
+    m_alpha       = 0.0;    
+    m_beta        = 0.0;
+
+    m_controls = new double[4];
+    m_controls[0] = 0.0;    // tau
+    m_controls[1] = 0.0;    // da
+    m_controls[2] = 0.0;    // de
+    m_controls[3] = 0.0;    // dr
+
+    // step 2: initalize p q r = 0
+    m_trim_state[3] = 0.0;  // p
+    m_trim_state[4] = 0.0;  // q
+    m_trim_state[5] = 0.0;  // r
+    
 
     if (m_trim_type == "sct"){
-        // requires bank angle
-        // requires elv or climb angle
-        // build G vector
-        double G[6];
-        G[0] = 
+        // requires bank angle and requires elv or climb angle
+
+        // init error
+        error = 1.0;
+        do {
+            // step 4: Calculate the body-fixed velocities from Eq. (14.9) for the traditional definition of sideslip
+            m_trim_state[0] = m_V*cos(m_alpha)*cos(m_beta); // u
+            m_trim_state[1] = m_V*sin(m_beta);              // v
+            m_trim_state[2] = m_V*sin(m_alpha)*cos(m_beta); // w
+
+            // step 7: For the case of a steady-coordinated turn, use Eq. (16.40) to compute the rotation rates.
+            grav = gravity_english(m_altitude);
+            sp = sin(m_bank_angle);
+            cp = cos(m_bank_angle);
+            st = sin(m_elv_angle);
+            ct = cos(m_elv_angle);
+
+            pqr_constant = grav*sp*ct/(m_trim_state[0]*ct*cp + m_trim_state[2]*st);
+            m_trim_state[3] = -pqr_constant*st;
+            m_trim_state[4] = pqr_constant*sp*ct;
+            m_trim_state[5] = pqr_constant*cp*ct;
+
+            // step 9: use the aerodynamic model or database to find the aerodynamic angles, thrust, and
+            // control-surface deflections that satisfy Eqs. (16.5) and (16.6).
+            // build G vector
+            G[0] = ;
+
+
+        } while ( error > m_tol);
+
+
+        
 
     }else if (m_trim_type == "shss"){
         // requires bank or side slip angle
@@ -284,10 +325,11 @@ void aircraft::aerodynamics_aircraft(double* y, double* ans)
     double qbar = q*m_cw/(2.0*V);
     double rbar = r*m_wing_span/(2.0*V); 
 
-    double tau = m_controls[0]; // throttle setting
-    double da = m_controls[1];
-    double de = m_controls[2];
-    double dr = m_controls[3];   
+    
+    double da = m_controls[0];
+    double de = m_controls[1];
+    double dr = m_controls[2];   
+    double tau = m_controls[3]; // throttle setting
 
     // calculate CL, CD, and Cm
     double CL1 = m_CL0 + m_CL_a*alpha;
