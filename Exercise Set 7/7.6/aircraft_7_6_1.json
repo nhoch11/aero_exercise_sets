@@ -37,7 +37,7 @@
         "type" : "trim",
         "state_types" : ["state", "trim"],
         "state" : {
-            "elevation_angle[deg]" : 17.59643219761,
+            "elevation_angle[deg]" : 16.648091483760705,
             "bank_angle[deg]" : 0.0,
             "alpha[deg]" : 16.64809148376088,
             "beta[deg]" : 0.0,
@@ -56,13 +56,13 @@
                               ["shss: requires *bank_angle[deg] or sideslip_angle[deg]."],
                               ["All types require *elevation_angle[deg] or climb_angle[deg]."],
                               ["Starred ’*’ inputs override"]],
-            "elevation_angle[deg]" : 0.0,
+            "elevation_angle[deg]" : 17.59643219761,
             "climb_angle[deg]" : 0.0,
             "bank_angle[deg]" : 0.0,
             "sideslip_angle[deg]" : 0.0,
             "solver" : {
                 "finite_difference_step_size" : 0.01,
-                "relaxation_factor" : 0.5,
+                "relaxation_factor" : 0.9,
                 "tolerance" : 1.0e-10,
                 "max_iterations" : 100,
                 "verbose" : true

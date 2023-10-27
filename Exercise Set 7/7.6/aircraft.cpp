@@ -233,6 +233,7 @@ void aircraft::init_from_trim(){
     double Rmax;
     double G[6], delta_G[6] ;
     double R[6], R_up[6], R_down[6];
+
     
     m_size = 13;
     // read in json values
@@ -251,13 +252,13 @@ void aircraft::init_from_trim(){
     cout<< "Verbose = " << m_verbose << endl;
     
     if (m_verbose == true){
-        printf("Initial phi   = %d\n", m_bank_angle*180.0/pi);
-        printf("Initial theta = %d\n\n", m_elv_angle*180.0/pi);
+        printf("Initial phi   = %f\n", m_bank_angle*180.0/pi);
+        printf("Initial theta = %f\n\n", m_elv_angle*180.0/pi);
     }
 
     // initialize trim state vector
     double* trim_state = new double[m_size];
-    printf("check allocate trim_state\n");
+    printf("check allocate Trim_state\n");
     // step 1: initialize alpha, beta, da, de, dr, tau = 0
     m_alpha       = 0.0;    
     m_beta        = 0.0;
@@ -283,7 +284,7 @@ void aircraft::init_from_trim(){
 
     trim_state[6] = 0.0;          // x
     trim_state[7] = 0.0;          // y
-    trim_state[9] = -m_altitude;  // z
+    trim_state[8] = -m_altitude;  // z
 
     
 
@@ -298,7 +299,7 @@ void aircraft::init_from_trim(){
             
             // get R unperturbed
             if (m_verbose == true){
-                printf("G = [alpha, beta, da, de, dr, tau]\n");}
+                printf("\n\nG  = [alpha, beta, da, de, dr, tau]\n");}
             
             calc_R(G, trim_state, R);
 
@@ -316,7 +317,7 @@ void aircraft::init_from_trim(){
                     J[i][j] = 0.0;}}
 
             if (m_verbose == true){
-                printf("Finite Difference step size = %d\n\n", m_finite_diff_step);}
+                printf("Finite Difference step size = %f \n\n", m_finite_diff_step);}
             
             // loop through perturbing G elements
             for (int i = 0; i < 6; i++){
@@ -360,16 +361,19 @@ void aircraft::init_from_trim(){
             // solve for delta G
             matrix_AxB_solve(J, R, 6, delta_G);
 
+            for (int i = 0;i<6;i++){
+                delta_G[i]= -delta_G[i];}
+
             if (m_verbose == true){
-                printf("\nDelta G = [");array_print(delta_G, 6);printf("]\n");}
+                printf("\nDelta G = [");array_print(delta_G, 6);}
 
             // step G with relaxation factor
             for (int i = 0; i< 6;i++){
                 G[i] += delta_G[i]*m_relaxation;}
             
             if (m_verbose == true){
-                printf("Relaxation Factor = %d\n", m_relaxation);
-                printf("New G  = [");array_print(G, 6);printf("]\n\n");}
+                printf("Relaxation Factor = %f\n", m_relaxation);
+                printf("New G  = [");array_print(G, 6);printf("\n");}
 
 
             // calc error
@@ -382,30 +386,39 @@ void aircraft::init_from_trim(){
             iter += 1;
 
             if (m_verbose == true){
-                printf("Iteration     Throttle        Alpha[deg]       Beta[deg]        Aileron[deg]       Elevator[deg]      Rudder[deg]      p[deg/s]     q[deg/s]       r[deg/s]       phi[deg]        theta[deg]      Load Factor      Max Residual\n");
-                printf("%d", iter, "%d", G[5],"%d", G[0]*180.0/pi,"%d", G[1]*180.0/pi, "%d", G[2]*180.0/pi,"%d", G[3]*180.0/pi,"%d", G[4]*180.0/pi, "%d", trim_state[3]*180.0/pi, "%d", trim_state[4]*180.0/pi, "%d", trim_state[5]*180.0/pi, "Load Factor ???", "%d\n\n", Rmax);}
+                printf("Iteration     Throttle              Alpha[deg]         Beta[deg]  \n");
+                cout<< iter << "             " << G[5]<< "      " <<  G[0]*180.0/pi << "      " << G[1]*180.0/pi  << endl;
+                
+                printf("\nAileron[deg]          Elevator[deg]           Rudder[deg]\n");
+                cout<< G[2]*180.0/pi<< "      " << G[3]*180.0/pi <<  "      " << G[4]*180.0/pi << endl;
+                
+                printf("\np[deg/s]               q[deg/s]             r[deg/s]                 phi[deg]                theta[deg]        \n");      
+                cout<< trim_state[3]*180.0/pi << "      " << trim_state[4]*180.0/pi << "      " << trim_state[5]*180.0/pi << "      " << m_bank_angle*180.0/pi << "      " <<m_elv_angle*180.0/pi << endl;
+                
+                printf("\nLoad Factor           Max Residual\n");
+                cout<< "??????????" << "             " << Rmax << endl;}
 
             delete[] J;
 
-        } while ( Rmax > m_tol);
+        } while ( iter < 2);
 
     // calc thrust
     // write to init state vector
 
     if (m_verbose == true){
-        printf("------- Trim Solution -------\n");
-        printf("elevation angle[deg] = %d", m_elv_angle);
-        printf("bank angle[deg]      = %d", m_bank_angle);
-        printf("alpha[deg]           = %d", G[0]);
-        printf("beta[deg]            = %d", G[1]);
-        printf("p[deg/s]             = %d", trim_state[3]);
-        printf("q[deg/s]             = %d", trim_state[4]);
-        printf("r[deg/s]             = %d", trim_state[5]);
-        printf("aileron[deg]         = %d", G[2]);
-        printf("elevator[deg]        = %d", G[3]);
-        printf("rudder[deg]          = %d", G[4]);
-        printf("Trottle              = %d", G[5]);
-        printf("Thrust               = ???");}
+        printf("\n\n------- Trim Solution -------\n");
+        printf("elevation angle[deg] = %f\n", m_elv_angle);
+        printf("bank angle[deg]      = %f\n", m_bank_angle);
+        printf("alpha[deg]           = %f\n", G[0]);
+        printf("beta[deg]            = %f\n", G[1]);
+        printf("p[deg/s]             = %f\n", trim_state[3]);
+        printf("q[deg/s]             = %f\n", trim_state[4]);
+        printf("r[deg/s]             = %f\n", trim_state[5]);
+        printf("aileron[deg]         = %f\n", G[2]);
+        printf("elevator[deg]        = %f\n", G[3]);
+        printf("rudder[deg]          = %f\n", G[4]);
+        printf("Trottle              = %f\n", G[5]);
+        printf("Thrust               = ???\n\n");}
 
         
 
@@ -420,6 +433,15 @@ void aircraft::init_from_trim(){
 void aircraft::calc_R(double G[6], double* y, double ans[6]){
     double sp, cp, st, ct, pqr_constant, grav;
     double* FM = new double[6];
+    
+    // update alpha, beta, controls
+    m_alpha        = G[0];
+    m_beta         = G[1];
+    m_controls[0]  = G[2]; // da
+    m_controls[1]  = G[3]; // de
+    m_controls[2]  = G[4]; // dr
+    m_controls[3]  = G[5]; // dr
+    
     // step 4: Calculate the body-fixed velocities from Eq. (14.9) for the traditional definition of sideslip
     y[0] = m_V*cos(m_alpha)*cos(m_beta); // u
     y[1] = m_V*sin(m_beta);              // v
@@ -451,7 +473,7 @@ void aircraft::calc_R(double G[6], double* y, double ans[6]){
     //put FM in the following
     ans[0] = FM[0] - m_weight*st    + (r*v - q*w)*m_weight/grav;
     ans[1] = FM[1] + m_weight*sp*ct + (p*w - r*u)*m_weight/grav;
-    ans[2] = FM[2] - m_weight*cp*ct + (q*u - p*v)*m_weight/grav;;
+    ans[2] = FM[2] + m_weight*cp*ct + (q*u - p*v)*m_weight/grav;;
     ans[3] = FM[3] - m_hz*q + m_hy*r + (m_Iyy - m_Izz)*q*r + m_Iyz*(q*q - r*r) + m_Ixz*p*q - m_Ixy*p*r;
     ans[4] = FM[4] + m_hz*p - m_hx*r + (m_Izz - m_Ixx)*p*r + m_Ixz*(r*r - p*p) + m_Ixy*q*r - m_Iyz*p*q;
     ans[5] = FM[5] - m_hy*p + m_hx*q + (m_Ixx - m_Iyy)*p*q + m_Ixy*(p*p - q*q) + m_Iyz*p*r - m_Ixz*q*r;

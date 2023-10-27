@@ -359,7 +359,7 @@ void matrix_vector_mult_3(double rm[3][3], double v[3], double* ans){
 void array_print(double* arr, int size){
     cout<< "[";
     for ( int i = 0; i < size; i++){
-        cout << scientific << setprecision(12) << setw(20) << arr[i] << " ";
+        cout << left<< fixed << setprecision(14) << setw(14) << arr[i] << ", ";
     }
     cout<< "]"<<endl;
 }
