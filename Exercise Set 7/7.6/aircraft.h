@@ -22,7 +22,7 @@ private:
     Atmosphere m_atm;
 
     double* m_initial_state;
-    double* m_trim_state;
+    //double* m_trim_state;
     int m_size;
     FILE* m_check_file;
 
@@ -153,7 +153,7 @@ private:
 
     void init_from_trim();
 
-    void calc_R(double G[6], double* phi, double R[6]);
+    void calc_R(double G[6], double* y, double R[6]);
 
     void aerodynamics_aircraft(double* y, double* ans);
 

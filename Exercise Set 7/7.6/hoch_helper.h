@@ -6,6 +6,8 @@
 #include <iomanip>
 #include <fstream>
 #include "json.hpp"
+#include "LUDv.h"
+#include <stdio.h>
 
 using namespace std; // use standard or 'std' namespace
 using json = nlohmann::json;
@@ -64,5 +66,7 @@ void array_print_3x3(double arr[3][3]);
 void vector_cross_3(double a[3], double b[3], double ans[3]);
 
 void vector_normalize_3(double vec[3]);
+
+void matrix_AxB_solve(double** A, double* B, int size, double* x);
 
 #endif

@@ -357,10 +357,11 @@ void matrix_vector_mult_3(double rm[3][3], double v[3], double* ans){
     }
 }
 void array_print(double* arr, int size){
+    cout<< "[";
     for ( int i = 0; i < size; i++){
         cout << scientific << setprecision(12) << setw(20) << arr[i] << " ";
     }
-    cout<< endl;
+    cout<< "]"<<endl;
 }
 
 void array_print_3x3(double arr[3][3]){
@@ -386,4 +387,12 @@ void vector_normalize_3(double vec[3]){
         vec[1] /= length;
         vec[2] /= length;
     }
+}
+
+void matrix_AxB_solve(double** A, double* B, int size, double* x)
+{
+    double* Pvt = new double[size];
+    LUDecomp(A, size, Pvt);
+    LUSolve( A, size, B, Pvt);
+    array_copy(B,x,size);
 }
