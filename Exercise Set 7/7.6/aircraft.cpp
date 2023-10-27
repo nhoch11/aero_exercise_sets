@@ -289,7 +289,7 @@ void aircraft::init_from_trim(){
     
 
     // init error
-    Rmax = 0.0;
+    Rmax = 1.0;
 
     if (m_trim_type == "sct"){
         printf("Triming aircraft for a Steady Coorinated Turn\n");
@@ -302,8 +302,6 @@ void aircraft::init_from_trim(){
                 printf("\n\nG  = [alpha, beta, da, de, dr, tau]\n");}
             
             calc_R(G, trim_state, R);
-
-
             
             // initialize jacobian
             if (m_verbose == true){
@@ -378,8 +376,8 @@ void aircraft::init_from_trim(){
 
             // calc error
             for (int i = 0; i< 6;i++){
-                if (R[i]>Rmax){
-                    Rmax = R[i];
+                if (abs(R[i])>Rmax){
+                    Rmax = abs(R[i]);
                 }
             }
 
@@ -396,7 +394,7 @@ void aircraft::init_from_trim(){
                 cout<< trim_state[3]*180.0/pi << "      " << trim_state[4]*180.0/pi << "      " << trim_state[5]*180.0/pi << "      " << m_bank_angle*180.0/pi << "      " <<m_elv_angle*180.0/pi << endl;
                 
                 printf("\nLoad Factor           Max Residual\n");
-                cout<< "??????????" << "             " << Rmax << endl;}
+                cout<< "??????????" << "             " <<   Rmax  <<  endl;}
 
             delete[] J;
 
@@ -709,7 +707,6 @@ void aircraft::aircraft_rk4(double t0, double* y0, double dt, int size, double* 
     
     fprintf(m_check_file, "\n"); 
 }
-
 
 void aircraft::run_sim()
 {
