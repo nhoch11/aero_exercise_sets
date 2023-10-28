@@ -11,6 +11,7 @@ aircraft::aircraft(string filename)
     
     // read in json m_input and assign to existing class attributes
     printf("Reading Aircraft info from file:\n");
+    
     // simulation
     m_time_step = m_input["simulation"]["time_step[s]"];
     m_total_time = m_input["simulation"]["total_time[s]"];
@@ -142,7 +143,9 @@ aircraft::aircraft(string filename)
     m_Cn_Lda = m_input["aerodynamics"]["Cn"]["Lda"];
     m_Cn_dr = m_input["aerodynamics"]["Cn"]["dr"];
 
-    
+    m_size = 13;
+    m_controls = new double[4];
+
     init_sim();  
 
 
@@ -235,15 +238,15 @@ void aircraft::init_from_trim(){
     double R[6], R_up[6], R_down[6];
 
     
-    m_size = 13;
+    
     // read in json values
     m_trim_type = m_input["initial"]["trim"]["type"];
-    m_elv_angle = m_input["initial"]["trim"]["elevation_angle[deg]"];
-    m_elv_angle = m_elv_angle*pi/180.0;
+    double theta = m_input["initial"]["trim"]["elevation_angle[deg]"];
+    theta = theta*pi/180.0;
     //m_climb_angle = m_input["initial"]["trim"]["climb_angle[deg]"];
     //m_climb_angle = m_elv_angle*pi/180.0;
-    m_bank_angle = m_input["initial"]["trim"]["bank_angle[deg]"];
-    m_bank_angle *= pi/180.0;
+    double phi = m_input["initial"]["trim"]["bank_angle[deg]"];
+    phi *= pi/180.0;
     m_finite_diff_step = m_input["initial"]["trim"]["solver"]["finite_difference_step_size"];
     m_relaxation = m_input["initial"]["trim"]["solver"]["relaxation_factor"];
     m_tol = m_input["initial"]["trim"]["solver"]["tolerance"];
@@ -252,44 +255,47 @@ void aircraft::init_from_trim(){
     cout<< "Verbose = " << m_verbose << endl;
     
     if (m_verbose == true){
-        printf("Initial phi   = %f\n", m_bank_angle*180.0/pi);
-        printf("Initial theta = %f\n\n", m_elv_angle*180.0/pi);
+        printf("Initial phi   = %f\n", phi*180.0/pi);
+        printf("Initial theta = %f\n\n", theta*180.0/pi);
     }
 
     // initialize trim state vector
     double* trim_state = new double[m_size];
     printf("check allocate Trim_state\n");
+    
+    bool converged = false;
     // step 1: initialize alpha, beta, da, de, dr, tau = 0
-    m_alpha       = 0.0;    
-    m_beta        = 0.0;
-
-    m_controls = new double[4];
-    m_controls[0] = 0.0;    // da
-    m_controls[1] = 0.0;    // de
-    m_controls[2] = 0.0;    // dr
-    m_controls[3] = 0.0;    // tau
+    double alpha       = 0.0;    
+    double beta        = 0.0;
+    
+    double da = 0.0;    // da
+    double de = 0.0;    // de
+    double dr = 0.0;    // dr
+    double tau = 0.0;    // tau
 
     // build G vector
-    G[0] = m_alpha;
-    G[1] = m_beta;
-    G[2] = m_controls[0]; // da
-    G[3] = m_controls[1]; // de
-    G[4] = m_controls[2]; // dr
-    G[5] = m_controls[3]; // tau
+    G[0] = alpha;
+    G[1] = beta;
+    G[2] = da; 
+    G[3] = de;    
+    G[4] = dr; 
+    G[5] = tau; 
 
-    // step 2: initalize p q r = 0
-    trim_state[3] = 0.0;  // p
-    trim_state[4] = 0.0;  // q
-    trim_state[5] = 0.0;  // r
-
-    trim_state[6] = 0.0;          // x
-    trim_state[7] = 0.0;          // y
-    trim_state[8] = -m_altitude;  // z
-
+    // step 2: initalize state
+    double* y = new double[9];
+    y[0] = m_V*cos(alpha)*cos(beta); // u
+    y[1] = m_V*sin(beta);              // v
+    y[2] = m_V*sin(alpha)*cos(beta); // w
     
+    y[3] = 0.0;  // p
+    y[4] = 0.0;  // q
+    y[5] = 0.0;  // r
 
-    // init error
-    Rmax = 1.0;
+    y[6] = 0.0;          // x
+    y[7] = 0.0;          // y
+    y[8] = -m_altitude;  // z
+
+        
 
     if (m_trim_type == "sct"){
         printf("Triming aircraft for a Steady Coorinated Turn\n");
@@ -301,7 +307,7 @@ void aircraft::init_from_trim(){
             if (m_verbose == true){
                 printf("\n\nG  = [alpha, beta, da, de, dr, tau]\n");}
             
-            calc_R(G, trim_state, R);
+            calc_R(G, y, phi, theta, R);
             
             // initialize jacobian
             if (m_verbose == true){
@@ -331,7 +337,7 @@ void aircraft::init_from_trim(){
                 if (m_verbose == true){
                     printf("Positive Finite Difference Step\n");}
                 
-                calc_R(G, trim_state, R_up);
+                calc_R(G, y, phi, theta, R_up);
                 
                 // step down
                 G[i] -= 2*m_finite_diff_step;
@@ -340,7 +346,7 @@ void aircraft::init_from_trim(){
                 if (m_verbose == true){
                     printf("Negative Finite Difference Step\n");}
                 
-                calc_R(G, trim_state, R_down);
+                calc_R(G, y, phi, theta, R_down);
 
                 // update column
                 for (int j = 0; j < 6; j++){
@@ -374,14 +380,19 @@ void aircraft::init_from_trim(){
                 printf("New G  = [");array_print(G, 6);printf("\n");}
 
 
-            // calc error
+            
+            Rmax = 1.0;
             for (int i = 0; i< 6;i++){
-                if (abs(R[i])>Rmax){
-                    Rmax = abs(R[i]);
-                }
-            }
+                 Rmax = max(Rmax, abs(R[i]));}
+
+            if (Rmax < m_tol){
+                converged = true;}
 
             iter += 1;
+
+            if (iter > m_max_iter){
+                converged = true;}
+            
 
             if (m_verbose == true){
                 printf("Iteration     Throttle              Alpha[deg]         Beta[deg]  \n");
@@ -398,25 +409,25 @@ void aircraft::init_from_trim(){
 
             delete[] J;
 
-        } while ( iter < 2);
+        } while (iter < 2);
 
     // calc thrust
     // write to init state vector
 
-    if (m_verbose == true){
-        printf("\n\n------- Trim Solution -------\n");
-        printf("elevation angle[deg] = %f\n", m_elv_angle);
-        printf("bank angle[deg]      = %f\n", m_bank_angle);
-        printf("alpha[deg]           = %f\n", G[0]);
-        printf("beta[deg]            = %f\n", G[1]);
-        printf("p[deg/s]             = %f\n", trim_state[3]);
-        printf("q[deg/s]             = %f\n", trim_state[4]);
-        printf("r[deg/s]             = %f\n", trim_state[5]);
-        printf("aileron[deg]         = %f\n", G[2]);
-        printf("elevator[deg]        = %f\n", G[3]);
-        printf("rudder[deg]          = %f\n", G[4]);
-        printf("Trottle              = %f\n", G[5]);
-        printf("Thrust               = ???\n\n");}
+    
+    printf("\n\n------- Trim Solution -------\n");
+    printf("elevation angle[deg] = %f\n", m_elv_angle);
+    printf("bank angle[deg]      = %f\n", m_bank_angle);
+    printf("alpha[deg]           = %f\n", G[0]);
+    printf("beta[deg]            = %f\n", G[1]);
+    printf("p[deg/s]             = %f\n", trim_state[3]);
+    printf("q[deg/s]             = %f\n", trim_state[4]);
+    printf("r[deg/s]             = %f\n", trim_state[5]);
+    printf("aileron[deg]         = %f\n", G[2]);
+    printf("elevator[deg]        = %f\n", G[3]);
+    printf("rudder[deg]          = %f\n", G[4]);
+    printf("Trottle              = %f\n", G[5]);
+    printf("Thrust               = ???\n\n");
 
         
 
@@ -428,17 +439,17 @@ void aircraft::init_from_trim(){
 
 }
 
-void aircraft::calc_R(double G[6], double* y, double ans[6]){
-    double sp, cp, st, ct, pqr_constant, grav;
+void aircraft::calc_R(double G[6], double* y, double phi, double theta, double ans[6]){
+    double alpha, beta, da, de, dr, tau, sp, cp, st, ct, pqr_constant, grav;
     double* FM = new double[6];
     
     // update alpha, beta, controls
-    m_alpha        = G[0];
-    m_beta         = G[1];
-    m_controls[0]  = G[2]; // da
-    m_controls[1]  = G[3]; // de
-    m_controls[2]  = G[4]; // dr
-    m_controls[3]  = G[5]; // dr
+    alpha = G[0];
+    beta  = G[1];
+    da    = G[2]; // da
+    de    = G[3]; // de
+    dr    = G[4]; // dr
+    tau   = G[5]; // dr
     
     // step 4: Calculate the body-fixed velocities from Eq. (14.9) for the traditional definition of sideslip
     y[0] = m_V*cos(m_alpha)*cos(m_beta); // u
