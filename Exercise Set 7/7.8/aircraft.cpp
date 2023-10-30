@@ -233,7 +233,7 @@ void aircraft::init_from_state(){
 }
 
 void aircraft::init_from_trim(){
-    double sa,ca, sb, cb, sp, cp, sg, st, ct, u, v, w, pqr_constant, grav;
+    double sa,ca, sb, cb, sp, cp, sg, st, ct, u, v, w, pqr_constant, var, grav;
     double term, bottom, big_term, theta1, theta2, check1, check2;
     double Rmax, n_a, qbar, CLift, thrust_mag;
     double G[6], delta_G[6] ;
@@ -267,13 +267,7 @@ void aircraft::init_from_trim(){
     double dr = 0.0;    // dr
     double tau = 0.0;    // tau
 
-    // build G vector
-    G[0] = alpha;
-    G[1] = beta;
-    G[2] = da; 
-    G[3] = de;    
-    G[4] = dr; 
-    G[5] = tau; 
+    
 
     double* y = new double[9];
     y[0] = m_V*cos(alpha)*cos(beta);
@@ -300,75 +294,125 @@ void aircraft::init_from_trim(){
         theta = m_input["initial"]["trim"]["elevation_angle[deg]"];
         theta = theta*pi/180.0;
     }else{
-    // if given climb angle, convert to elevation angle
+    // if given climb angle, conversion to elevation will be needed
         gamma = m_input["initial"]["trim"]["climb_angle[deg]"];
         gamma = gamma*pi/180.0;
         solve_Elevation = true;
     }
-    
-    phi = m_input["initial"]["trim"]["bank_angle[deg]"];
-    phi *= pi/180.0;
 
-    if (m_verbose == true){
-        printf("Initial phi   = %f\n", phi*180.0/pi);
-        printf("Initial theta = %f\n\n", theta*180.0/pi);
+    bool solve_traditional = true;
+    // check to see if given phi
+    if (key_exists(m_input["initial"]["trim"],"bank_angle[deg]")){
+        phi = m_input["initial"]["trim"]["bank_angle[deg]"];
+        phi *= pi/180.0;
+    }else{
+    // if given sideslip, conversion to phi will be needed
+        beta = m_input["initial"]["trim"]["sideslip_angle[deg]"];
+        beta = beta*pi/180.0;
+        solve_traditional = false;
     }
+    
+
 
     if (m_trim_type == "sct"){
-        printf("Triming aircraft for a Steady Coorinated Turn\n");
+        printf("\nTriming aircraft for a Steady Coorinated Turn\n");
         // requires bank angle and requires elv or climb angle
-        int iter = 0;
-        do {
-            //gamma = asin((u*st - (v*sp + w*cp)*ct)/m_V); 
-            sg = sin(gamma);
-            
-            alpha = G[0];
-            beta  = G[1];
-            
-            sa = sin(alpha);
-            ca = cos(alpha);
-            sb = sin(beta);
-            cb = cos(beta);
-            sp = sin(phi);
-            cp = cos(phi);
-            
+        if (m_verbose == true){
+            printf("\nInitial phi   = %f\n", phi*180.0/pi);
+            printf("Initial theta = %f\n\n", theta*180.0/pi);
+        }
 
-            grav = gravity_english(m_altitude);// 
+    }else if (m_trim_type == "shss"){
+        printf("\nTrimming Aircraft for a Steady Heading Side Slip\n");
+        // requires bank or side slip angle
+        // requires elv or climb angle
 
-            y[0] = m_V*ca*cb; // u
-            y[1] = m_V*sb;    // v
-            y[2] = m_V*sa*cb; // w
 
+        if (m_verbose == true){
+            printf("\nInitial phi   = %f\n", phi*180.0/pi);
+            printf("Initial theta = %f\n\n", theta*180.0/pi);
+            printf("p[deg/s]        = %20.12e\n", y[3]*180.0/pi);
+            printf("q[deg/s]        = %20.12e\n", y[4]*180.0/pi);
+            printf("r[deg/s]        = %20.12e\n\n", y[5]*180.0/pi);
+        }
+        
+    }
+
+
+    // build G vector
+    G[0] = alpha;
+
+    if (solve_traditional == true){
+        G[1] = beta;
+        var = phi;
+    }else{
+        G[1] = phi;
+        var = beta;
+    }
+
+    G[2] = da; 
+    G[3] = de;    
+    G[4] = dr; 
+    G[5] = tau; 
+
+        
+    int iter = 0;
+    do {
+        //gamma = asin((u*st - (v*sp + w*cp)*ct)/m_V); 
+        sg = sin(gamma);
+
+        if (solve_traditional == true){
+            beta = G[1];
+            phi = var;
+        }else{
+            phi = G[1];
+            beta = var;
+        }
+        
+        alpha = G[0];
+        
+        sa = sin(alpha);
+        ca = cos(alpha);
+        sb = sin(beta);
+        cb = cos(beta);
+        sp = sin(phi);
+        cp = cos(phi);
+
+
+        y[0] = m_V*ca*cb; // u
+        y[1] = m_V*sb;    // v
+        y[2] = m_V*sa*cb; // w
+
+        
+
+        u = y[0]; // u
+        v = y[1];    // v
+        w = y[2]; // w
+        
+        // update theta
+        if (solve_Elevation == true){
+            printf("\nSolving for theta given a climb angle\n");
+            term = (v*sp + w*cp);
+            bottom = u*u + term*term;
+            big_term = term*sqrt(u*u + term*term - m_V*m_V*sg*sg);
+            theta1 = asin((u*m_V*sg + big_term)/bottom);
+            theta2 = asin((u*m_V*sg - big_term)/bottom);
+            check1 = m_V*sg -u*sin(theta1) + term*cos(theta1);
+            check2 = m_V*sg -u*sin(theta2) + term*cos(theta2);
+            if (abs(check1) < abs(check2)){ theta = theta1;}
+            else{theta = theta2;}
 
             if (m_verbose == true){
-                printf("\nUpdating p, q and r\n");
-                printf("p[deg/s]        = %20.12e\n", y[3]*180.0/pi);
-                printf("q[deg/s]        = %20.12e\n", y[4]*180.0/pi);
-                printf("r[deg/s]        = %20.12e\n\n", y[5]*180.0/pi);}
-
-            u = y[0]; // u
-            v = y[1];    // v
-            w = y[2]; // w
-            
-            // update theta
-            if (solve_Elevation == true){
-                printf("\nSolving for theta given a climb angle\n");
-                term = (v*sp + w*cp);
-                bottom = u*u + term*term;
-                big_term = term*sqrt(u*u + term*term - m_V*m_V*sg*sg);
-                theta1 = asin((u*m_V*sg + big_term)/bottom);
-                theta2 = asin((u*m_V*sg - big_term)/bottom);
-                check1 = m_V*sg -u*sin(theta1) + term*cos(theta1);
-                check2 = m_V*sg -u*sin(theta2) + term*cos(theta2);
-                if (abs(check1) < abs(check2)){ theta = theta1;}
-                else{theta = theta2;}
-
-                if (m_verbose == true){
-                    printf("theta 1        = %20.12e\n", theta1*180.0/pi);
-                    printf("theta 2        = %20.12e\n", theta2*180.0/pi);
-                    printf("correct theta  = %20.12e\n\n", theta*180.0/pi);}   
-            }
+                printf("theta 1        = %20.12e\n", theta1*180.0/pi);
+                printf("theta 2        = %20.12e\n", theta2*180.0/pi);
+                printf("correct theta  = %20.12e\n\n", theta*180.0/pi);}   
+        }
         
+
+
+        if (m_trim_type == "sct"){
+        
+            grav = gravity_english(m_altitude);// 
             st = sin(theta);
             ct = cos(theta);
             pqr_constant = grav*sp*ct/(y[0]*ct*cp + y[2]*st);
@@ -376,126 +420,132 @@ void aircraft::init_from_trim(){
             y[4] = pqr_constant*sp*ct;  // q
             y[5] = pqr_constant*cp*ct;  // r
 
-
-            // get R unperturbed
             if (m_verbose == true){
-                printf("\n\nG  = [alpha, beta, da, de, dr, tau]\n");}
-            
-            calc_R(G, y, phi, theta, R);
-            
-            // initialize jacobian
-            if (m_verbose == true){
-                printf("Building Jacobian Matrix:\n");}
-            
-            double** J = new double* [6];
-            for (int i = 0; i< 6;i++){
-                J[i] = new double[6];}
-            for (int i = 0; i< 6;i++){
-                for (int j = 0; j< 6;j++){
-                    J[i][j] = 0.0;}}
+                printf("\nUpdating p, q and r\n");
+                printf("p[deg/s]        = %20.12e\n", y[3]*180.0/pi);
+                printf("q[deg/s]        = %20.12e\n", y[4]*180.0/pi);
+                printf("r[deg/s]        = %20.12e\n\n", y[5]*180.0/pi);}
+        }
 
-            if (m_verbose == true){
-                printf("Finite Difference step size = %f \n\n", m_finite_diff_step);}
-            
-            // loop through perturbing G elements
-            for (int i = 0; i < 6; i++){
-                if (m_verbose == true){
-                    printf("-------------------------------------\n");
-                    printf("Computing Gradient relative to G[%d]\n",i);
-                    printf("-------------------------------------\n\n");}
-                
-                // step up
-                G[i] += m_finite_diff_step;
-
-                // calc R_up
-                if (m_verbose == true){
-                    printf("Positive Finite Difference Step\n");}
-                
-                calc_R(G, y, phi, theta, R_up);
-                
-                // step down
-                G[i] -= 2.0*m_finite_diff_step;
-
-                // calc R_down
-                if (m_verbose == true){
-                    printf("Negative Finite Difference Step\n");}
-                
-                calc_R(G, y, phi, theta, R_down);
-
-                // update column
-                for (int j = 0; j < 6; j++){
-                    J[j][i] = (R_up[j] - R_down[j])/(2*m_finite_diff_step);
-                }
-
-                // put G back to normal
-                G[i] += m_finite_diff_step;
-            }
+        // get R unperturbed
+        if (m_verbose == true){
+            printf("\n\nG  = [alpha, beta, da, de, dr, tau]\n");}
         
+        calc_R(G, y, phi, theta, R, solve_traditional);
+        
+        // initialize jacobian
+        if (m_verbose == true){
+            printf("Building Jacobian Matrix:\n");}
+        
+        double** J = new double* [6];
+        for (int i = 0; i< 6;i++){
+            J[i] = new double[6];}
+        for (int i = 0; i< 6;i++){
+            for (int j = 0; j< 6;j++){
+                J[i][j] = 0.0;}}
+
+        if (m_verbose == true){
+            printf("Finite Difference step size = %f \n\n", m_finite_diff_step);}
+        
+        // loop through perturbing G elements
+        for (int i = 0; i < 6; i++){
             if (m_verbose == true){
-                    printf("Jacobian Matrix:\n");
-                    for (int i = 0; i< 6;i++){
-                        array_print(J[i], 6);}}
+                printf("-------------------------------------\n");
+                printf("Computing Gradient relative to G[%d]\n",i);
+                printf("-------------------------------------\n\n");}
+            
+            // step up
+            G[i] += m_finite_diff_step;
 
-                        
-
-            array_copy(R,R_copy,6);
-            // solve for delta G
-            matrix_AxB_solve(J, R_copy, 6, delta_G);
-
-            for (int i = 0;i<6;i++){
-                delta_G[i]= -delta_G[i];}
-
+            // calc R_up
             if (m_verbose == true){
-                printf("\nDelta G = ");array_print(delta_G, 6);}
-
-            // step G with relaxation factor
-            for (int i = 0; i< 6;i++){
-                G[i] += delta_G[i]*m_relaxation;}
+                printf("Positive Finite Difference Step\n");}
             
+            calc_R(G, y, phi, theta, R_up, solve_traditional);
+            
+            // step down
+            G[i] -= 2.0*m_finite_diff_step;
+
+            // calc R_down
             if (m_verbose == true){
-                printf("Relaxation Factor = %f\n", m_relaxation);
-                printf("New G  = ");array_print(G, 6);printf("\n");}
-
-            // calc CL 
-            //qbar = y[4]*m_cw/(2.0*m_V); 
-            //CLift  = m_CL0 + m_CL_a*G[0] + m_CL_qbar*qbar + m_CL_de*G[3];
+                printf("Negative Finite Difference Step\n");}
             
-            // calc load factor eq 16.32
-            aerodynamics_aircraft(y, FM);
-            n_a = (-FM[2]*cos(G[0]) + FM[0]*sin(G[0]))/m_weight;
+            calc_R(G, y, phi, theta, R_down, solve_traditional);
 
-            // calc thrust
-            thrust_mag = G[5]*pow(Rho/m_rho0, m_a)*(m_T0 + m_T1*m_V + m_T2*m_V*m_V);
+            // update column
+            for (int j = 0; j < 6; j++){
+                J[j][i] = (R_up[j] - R_down[j])/(2*m_finite_diff_step);
+            }
+
+            // put G back to normal
+            G[i] += m_finite_diff_step;
+        }
+    
+        if (m_verbose == true){
+                printf("Jacobian Matrix:\n");
+                for (int i = 0; i< 6;i++){
+                    array_print(J[i], 6);}}
+
+                    
+
+        array_copy(R,R_copy,6);
+        // solve for delta G
+        matrix_AxB_solve(J, R_copy, 6, delta_G);
+
+        for (int i = 0;i<6;i++){
+            delta_G[i]= -delta_G[i];}
+
+        if (m_verbose == true){
+            printf("\nDelta G = ");array_print(delta_G, 6);}
+
+        // step G with relaxation factor
+        for (int i = 0; i< 6;i++){
+            G[i] += delta_G[i]*m_relaxation;}
+        
+        if (m_verbose == true){
+            printf("Relaxation Factor = %f\n", m_relaxation);
+            printf("New G  = ");array_print(G, 6);printf("\n");}
+
+        // calc CL 
+        //qbar = y[4]*m_cw/(2.0*m_V); 
+        //CLift  = m_CL0 + m_CL_a*G[0] + m_CL_qbar*qbar + m_CL_de*G[3];
+        
+        // calc load factor eq 16.32
+        aerodynamics_aircraft(y, FM);
+        n_a = (-FM[2]*cos(G[0]) + FM[0]*sin(G[0]))/m_weight;
+
+        // calc thrust
+        thrust_mag = G[5]*pow(Rho/m_rho0, m_a)*(m_T0 + m_T1*m_V + m_T2*m_V*m_V);
+        
+        Rmax = 0.0;
+        for (int i = 0; i< 6;i++){
+                Rmax = max(Rmax, abs(R[i]));}
+
+        if (Rmax < m_tol){
+            converged = true;}
+
+        iter += 1;
+
+        if (iter > m_max_iter){
+            converged = true;}
+        
+
+        if (m_verbose == true){
+            printf("Iteration     Throttle              Alpha[deg]         Beta[deg]  \n");
+            cout<< iter << "             " << G[5]<< "      " <<  G[0]*180.0/pi << "      " << G[1]*180.0/pi  << endl;
             
-            Rmax = 0.0;
-            for (int i = 0; i< 6;i++){
-                 Rmax = max(Rmax, abs(R[i]));}
-
-            if (Rmax < m_tol){
-                converged = true;}
-
-            iter += 1;
-
-            if (iter > m_max_iter){
-                converged = true;}
+            printf("\nAileron[deg]          Elevator[deg]           Rudder[deg]\n");
+            cout<< G[2]*180.0/pi<< "      " << G[3]*180.0/pi <<  "      " << G[4]*180.0/pi << endl;
             
+            printf("\np[deg/s]               q[deg/s]             r[deg/s]                 phi[deg]                theta[deg]        \n");      
+            cout<< y[3]*180.0/pi << "      " << y[4]*180.0/pi << "      " << y[5]*180.0/pi << "      " << phi*180.0/pi << "      " << theta*180.0/pi << endl;
+            
+            printf("\nLoad Factor           Max Residual\n");
+            cout<< n_a << "             " <<   Rmax  <<  endl;}
 
-            if (m_verbose == true){
-                printf("Iteration     Throttle              Alpha[deg]         Beta[deg]  \n");
-                cout<< iter << "             " << G[5]<< "      " <<  G[0]*180.0/pi << "      " << G[1]*180.0/pi  << endl;
-                
-                printf("\nAileron[deg]          Elevator[deg]           Rudder[deg]\n");
-                cout<< G[2]*180.0/pi<< "      " << G[3]*180.0/pi <<  "      " << G[4]*180.0/pi << endl;
-                
-                printf("\np[deg/s]               q[deg/s]             r[deg/s]                 phi[deg]                theta[deg]        \n");      
-                cout<< y[3]*180.0/pi << "      " << y[4]*180.0/pi << "      " << y[5]*180.0/pi << "      " << phi*180.0/pi << "      " << theta*180.0/pi << endl;
-                
-                printf("\nLoad Factor           Max Residual\n");
-                cout<< n_a << "             " <<   Rmax  <<  endl;}
+        delete[] J;
 
-            delete[] J;
-
-        } while (converged == false);//(iter<2);//
+    } while (converged == false);//(iter<2);//
 
     // calc thrust
     // write to init state vector
@@ -518,42 +568,61 @@ void aircraft::init_from_trim(){
 
         
 
-    }else if (m_trim_type == "shss"){
-        printf("Trimming Aircraft for a Steady Heading Side Slip");
-        // requires bank or side slip angle
-        // requires elv or climb angle
-    }
-
 }
 
-void aircraft::calc_R(double G[6], double* y, double phi, double theta, double ans[6]){
-    double alpha, beta, da, de, dr, tau, grav, sp, cp, st, ct, pqr_constant;
+void aircraft::calc_R(double G[6], double* y, double var, double theta, double ans[6], bool solve_traditional){
+    double alpha, beta, phi, da, de, dr, tau, sp, cp, st, ct, grav, pqr_constant;
     double* FM = new double[6];
     
-    // update alpha, beta, controls
-    alpha = G[0];
-    beta  = G[1];
-    m_controls[0]    = G[2]; // da
-    m_controls[1]    = G[3]; // de
-    m_controls[2]    = G[4]; // dr
-    m_controls[3]    = G[5]; // dr
+    if (solve_traditional == true){
+        // if traditional, phi is passsed in as var, beta is G[1]
+        phi = var;
+        
+        // update alpha, beta, controls
+        alpha = G[0];
+        beta  = G[1];
+        m_controls[0]    = G[2]; // da
+        m_controls[1]    = G[3]; // de
+        m_controls[2]    = G[4]; // dr
+        m_controls[3]    = G[5]; // dr
 
-    sp = sin(phi);
-    cp = cos(phi);
-    st = sin(theta);
-    ct = cos(theta);
-    grav = gravity_english(m_altitude);
+        sp = sin(phi);
+        cp = cos(phi);
+        st = sin(theta);
+        ct = cos(theta);
+        grav = gravity_english(m_altitude);
 
-    // step 4: Calculate the body-fixed velocities from Eq. (14.9) for the traditional definition of sideslip
-    y[0] = m_V*cos(alpha)*cos(beta); // u
-    y[1] = m_V*sin(beta);            // v
-    y[2] = m_V*sin(alpha)*cos(beta); // w
+        // step 4: Calculate the body-fixed velocities from Eq. (14.9) for the traditional definition of sideslip
+        y[0] = m_V*cos(alpha)*cos(beta); // u
+        y[1] = m_V*sin(beta);            // v
+        y[2] = m_V*sin(alpha)*cos(beta); // w
 
-    // pqr_constant = grav*sp*ct/(y[0]*ct*cp + y[2]*st);
-    // y[3] = -pqr_constant*st;    // p
-    // y[4] = pqr_constant*sp*ct;  // q
-    // y[5] = pqr_constant*cp*ct;  // r
-    
+        // pqr_constant = grav*sp*ct/(y[0]*ct*cp + y[2]*st);
+        // y[3] = -pqr_constant*st;    // p
+        // y[4] = pqr_constant*sp*ct;  // q
+        // y[5] = pqr_constant*cp*ct;  // r
+    }else{
+        // if non traditional, beta is passed in as var and phi is passed in as G[1]
+        beta = var;
+        
+        alpha = G[0];
+        phi   = G[1];
+        m_controls[0]    = G[2]; // da
+        m_controls[1]    = G[3]; // de
+        m_controls[2]    = G[4]; // dr
+        m_controls[3]    = G[5]; // dr
+
+        sp = sin(phi);
+        cp = cos(phi);
+        st = sin(theta);
+        ct = cos(theta);
+        grav = gravity_english(m_altitude);
+
+        // step 4: Calculate the body-fixed velocities from Eq. (14.9) for the traditional definition of sideslip
+        y[0] = m_V*cos(alpha)*cos(beta); // u
+        y[1] = m_V*sin(beta);            // v
+        y[2] = m_V*sin(alpha)*cos(beta); // w
+    }
 
     // call calc aero
     aerodynamics_aircraft(y, FM);

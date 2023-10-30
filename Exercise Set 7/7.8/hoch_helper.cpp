@@ -359,7 +359,8 @@ void matrix_vector_mult_3(double rm[3][3], double v[3], double* ans){
 void array_print(double* arr, int size){
     cout<< "[";
     for ( int i = 0; i < size; i++){
-        cout << left<< fixed << setprecision(14) << setw(14) << arr[i] << ", ";
+        //cout << left<< fixed << setprecision(14) << setw(14) << arr[i] << ", ";
+        printf("%20.12e, ", arr[i]);
     }
     cout<< "]"<<endl;
 }
