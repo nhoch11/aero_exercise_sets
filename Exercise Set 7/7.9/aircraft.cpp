@@ -596,16 +596,7 @@ void aircraft::calc_R(double G[6], double* y, double var, double theta, double a
         st = sin(theta);
         ct = cos(theta);
         grav = gravity_english(m_altitude);
-
-        // step 4: Calculate the body-fixed velocities from Eq. (14.9) for the traditional definition of sideslip
-        y[0] = m_V*cos(alpha)*cos(beta); // u
-        y[1] = m_V*sin(beta);            // v
-        y[2] = m_V*sin(alpha)*cos(beta); // w
-
-        // pqr_constant = grav*sp*ct/(y[0]*ct*cp + y[2]*st);
-        // y[3] = -pqr_constant*st;    // p
-        // y[4] = pqr_constant*sp*ct;  // q
-        // y[5] = pqr_constant*cp*ct;  // r
+        
     }else{
         // if non traditional, beta is passed in as var and phi is passed in as G[1]
         beta = var;
@@ -622,12 +613,16 @@ void aircraft::calc_R(double G[6], double* y, double var, double theta, double a
         st = sin(theta);
         ct = cos(theta);
         grav = gravity_english(m_altitude);
-
-        // step 4: Calculate the body-fixed velocities from Eq. (14.9) for the traditional definition of sideslip
-        y[0] = m_V*cos(alpha)*cos(beta); // u
-        y[1] = m_V*sin(beta);            // v
-        y[2] = m_V*sin(alpha)*cos(beta); // w
     }
+    // step 4: Calculate the body-fixed velocities from Eq. (14.9) for the traditional definition of sideslip
+    y[0] = m_V*cos(alpha)*cos(beta); // u
+    y[1] = m_V*sin(beta);            // v
+    y[2] = m_V*sin(alpha)*cos(beta); // w
+    
+    // pqr_constant = grav*sp*ct/(y[0]*ct*cp + y[2]*st);
+    // y[3] = -pqr_constant*st;    // p
+    // y[4] = pqr_constant*sp*ct;  // q
+    // y[5] = pqr_constant*cp*ct;  // r
 
     // call calc aero
     aerodynamics_aircraft(y, FM);
