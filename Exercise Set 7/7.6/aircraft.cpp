@@ -235,7 +235,7 @@ void aircraft::init_from_state(){
 void aircraft::init_from_trim(){
     double Rmax;
     double G[6], delta_G[6] ;
-    double R[6], R_up[6], R_down[6];
+    double R[6], R_up[6], R_down[6], R_copy[6];
 
     
     
@@ -265,8 +265,8 @@ void aircraft::init_from_trim(){
     
     bool converged = false;
     // step 1: initialize alpha, beta, da, de, dr, tau = 0
-    double alpha       = 0.0;    
-    double beta        = 0.0;
+    double alpha = 0.0;    
+    double beta = 0.0;
     
     double da = 0.0;    // da
     double de = 0.0;    // de
@@ -340,7 +340,7 @@ void aircraft::init_from_trim(){
                 calc_R(G, y, phi, theta, R_up);
                 
                 // step down
-                G[i] -= 2*m_finite_diff_step;
+                G[i] -= 2.0*m_finite_diff_step;
 
                 // calc R_down
                 if (m_verbose == true){
@@ -362,8 +362,9 @@ void aircraft::init_from_trim(){
                     for (int i = 0; i< 6;i++){
                         array_print(J[i], 6);}}
 
+            array_copy(R,R_copy,6);
             // solve for delta G
-            matrix_AxB_solve(J, R, 6, delta_G);
+            matrix_AxB_solve(J, R_copy, 6, delta_G);
 
             for (int i = 0;i<6;i++){
                 delta_G[i]= -delta_G[i];}
@@ -381,7 +382,7 @@ void aircraft::init_from_trim(){
 
 
             
-            Rmax = 1.0;
+            Rmax = 0.0;
             for (int i = 0; i< 6;i++){
                  Rmax = max(Rmax, abs(R[i]));}
 
@@ -409,23 +410,23 @@ void aircraft::init_from_trim(){
 
             delete[] J;
 
-        } while (iter < 2);
+        } while (converged == false);
 
     // calc thrust
     // write to init state vector
 
     
     printf("\n\n------- Trim Solution -------\n");
-    printf("elevation angle[deg] = %f\n", m_elv_angle);
-    printf("bank angle[deg]      = %f\n", m_bank_angle);
-    printf("alpha[deg]           = %f\n", G[0]);
-    printf("beta[deg]            = %f\n", G[1]);
-    printf("p[deg/s]             = %f\n", trim_state[3]);
-    printf("q[deg/s]             = %f\n", trim_state[4]);
-    printf("r[deg/s]             = %f\n", trim_state[5]);
-    printf("aileron[deg]         = %f\n", G[2]);
-    printf("elevator[deg]        = %f\n", G[3]);
-    printf("rudder[deg]          = %f\n", G[4]);
+    printf("elevation angle[deg] = %f\n", theta*180.0/pi);
+    printf("bank angle[deg]      = %f\n", phi*180.0/pi);
+    printf("alpha[deg]           = %f\n", G[0]*180.0/pi);
+    printf("beta[deg]            = %f\n", G[1]*180.0/pi);
+    printf("p[deg/s]             = %f\n", y[3]*180.0/pi);
+    printf("q[deg/s]             = %f\n", y[4]*180.0/pi);
+    printf("r[deg/s]             = %f\n", y[5]*180.0/pi);
+    printf("aileron[deg]         = %f\n", G[2]*180.0/pi);
+    printf("elevator[deg]        = %f\n", G[3]*180.0/pi);
+    printf("rudder[deg]          = %f\n", G[4]*180.0/pi);
     printf("Trottle              = %f\n", G[5]);
     printf("Thrust               = ???\n\n");
 
@@ -446,22 +447,22 @@ void aircraft::calc_R(double G[6], double* y, double phi, double theta, double a
     // update alpha, beta, controls
     alpha = G[0];
     beta  = G[1];
-    da    = G[2]; // da
-    de    = G[3]; // de
-    dr    = G[4]; // dr
-    tau   = G[5]; // dr
+    m_controls[0]    = G[2]; // da
+    m_controls[1]    = G[3]; // de
+    m_controls[2]    = G[4]; // dr
+    m_controls[3]    = G[5]; // dr
     
     // step 4: Calculate the body-fixed velocities from Eq. (14.9) for the traditional definition of sideslip
-    y[0] = m_V*cos(m_alpha)*cos(m_beta); // u
-    y[1] = m_V*sin(m_beta);              // v
-    y[2] = m_V*sin(m_alpha)*cos(m_beta); // w
+    y[0] = m_V*cos(alpha)*cos(beta); // u
+    y[1] = m_V*sin(beta);              // v
+    y[2] = m_V*sin(alpha)*cos(beta); // w
 
     // step 7: For the case of a steady-coordinated turn, use Eq. (16.40) to compute the rotation rates.
     grav = gravity_english(m_altitude);// 
-    sp = sin(m_bank_angle);
-    cp = cos(m_bank_angle);
-    st = sin(m_elv_angle);
-    ct = cos(m_elv_angle);
+    sp = sin(phi);
+    cp = cos(phi);
+    st = sin(theta);
+    ct = cos(theta);
 
     pqr_constant = grav*sp*ct/(y[0]*ct*cp + y[2]*st);
     y[3] = -pqr_constant*st;    // p
