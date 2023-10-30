@@ -431,7 +431,7 @@ void aircraft::init_from_trim(){
         if (m_verbose == true){
             printf("\n\nG  = [alpha, beta, da, de, dr, tau]\n");}
         
-        calc_R(G, y, phi, theta, R, solve_traditional);
+        calc_R(G, y, var, theta, R, solve_traditional);
         
         // initialize jacobian
         if (m_verbose == true){
@@ -461,7 +461,7 @@ void aircraft::init_from_trim(){
             if (m_verbose == true){
                 printf("Positive Finite Difference Step\n");}
             
-            calc_R(G, y, phi, theta, R_up, solve_traditional);
+            calc_R(G, y, var, theta, R_up, solve_traditional);
             
             // step down
             G[i] -= 2.0*m_finite_diff_step;
@@ -470,7 +470,7 @@ void aircraft::init_from_trim(){
             if (m_verbose == true){
                 printf("Negative Finite Difference Step\n");}
             
-            calc_R(G, y, phi, theta, R_down, solve_traditional);
+            calc_R(G, y, var, theta, R_down, solve_traditional);
 
             // update column
             for (int j = 0; j < 6; j++){
