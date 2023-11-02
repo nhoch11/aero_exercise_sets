@@ -576,6 +576,7 @@ void aircraft::init_from_trim(){
 }
 
 void aircraft::calc_R(double G[6], double* y, double var, double theta, double ans[6], bool solve_traditional){
+    
     double alpha, beta, phi, da, de, dr, tau, sp, cp, st, ct, grav, pqr_constant;
     double* FM = new double[6];
     
@@ -584,25 +585,18 @@ void aircraft::calc_R(double G[6], double* y, double var, double theta, double a
         phi = var;
         
         // update alpha, beta, controls
-        alpha = G[0];
         beta  = G[1];
-        m_controls[0]    = G[2]; // da
-        m_controls[1]    = G[3]; // de
-        m_controls[2]    = G[4]; // dr
-        m_controls[3]    = G[5]; // dr
-
-        sp = sin(phi);
-        cp = cos(phi);
-        st = sin(theta);
-        ct = cos(theta);
-        grav = gravity_english(m_altitude);
+      
         
     }else{
         // if non traditional, beta is passed in as var and phi is passed in as G[1]
         beta = var;
         
-        alpha = G[0];
         phi   = G[1];
+
+    }
+        
+        alpha = G[0];
         m_controls[0]    = G[2]; // da
         m_controls[1]    = G[3]; // de
         m_controls[2]    = G[4]; // dr
@@ -613,7 +607,7 @@ void aircraft::calc_R(double G[6], double* y, double var, double theta, double a
         st = sin(theta);
         ct = cos(theta);
         grav = gravity_english(m_altitude);
-    }
+    
     // step 4: Calculate the body-fixed velocities from Eq. (14.9) for the traditional definition of sideslip
     y[0] = m_V*cos(alpha)*cos(beta); // u
     y[1] = m_V*sin(beta);            // v
