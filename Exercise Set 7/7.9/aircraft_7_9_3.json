@@ -65,7 +65,7 @@
                 "relaxation_factor" : 0.9,
                 "tolerance" : 1.0e-10,
                 "max_iterations" : 100,
-                "verbose" : true
+                "verbose" : false
             }
         }
     },

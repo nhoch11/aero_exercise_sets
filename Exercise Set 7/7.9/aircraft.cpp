@@ -185,12 +185,15 @@ void aircraft::init_from_state(){
     m_r *= pi/180.0;
     
     m_throttle = m_input["initial"]["state"]["throttle"];
+    
     m_da = m_input["initial"]["state"]["aileron[deg]"];
+    m_da *=pi/180.0;
     m_de = m_input["initial"]["state"]["elevator[deg]"];
+    m_de *=pi/180.0;
     m_dr = m_input["initial"]["state"]["rudder[deg]"]; 
+    m_dr *=pi/180.0;
 
 
-    m_controls = new double[4];
     m_controls[0] = m_da;
     m_controls[1] = m_de;
     m_controls[2] = m_dr;
@@ -210,6 +213,23 @@ void aircraft::init_from_state(){
     m_initial_state[10] = m_elv_angle;      // theta
     m_initial_state[11] = m_heading;        // psi
 
+
+    printf("\n\n\n---------------  Given Initial State ---------------\n");
+    printf("u[ft/s]              = %20.12e\n", m_initial_state[0]);
+    printf("v[ft/s]              = %20.12e\n", m_initial_state[1]);
+    printf("w[ft/s]              = %20.12e\n", m_initial_state[2]);
+    printf("p[deg/s]             = %20.12e\n", m_initial_state[3]*180.0/pi);
+    printf("q[deg/s]             = %20.12e\n", m_initial_state[4]*180.0/pi);
+    printf("r[deg/s]             = %20.12e\n", m_initial_state[5]*180.0/pi);
+    printf("xf[ft]               = %20.12e\n", m_initial_state[6]);
+    printf("y[ft]                = %20.12e\n", m_initial_state[7]);
+    printf("z[ft]                = %20.12e\n\n", m_initial_state[8]);
+    
+    printf("Euler Angles \n");
+    printf("phi[deg]             = %20.12e\n", m_initial_state[9]*180.0/pi);
+    printf("theta[deg]           = %20.12e\n", m_initial_state[10]*180.0/pi);
+    printf("psi[deg]             = %20.12e\n\n", m_initial_state[11]*180.0/pi);
+    
     // convert phi, theta, and psi to a quat
     double* quat = new double[4];
     euler_to_quat(&m_initial_state[9], quat);
@@ -223,17 +243,38 @@ void aircraft::init_from_state(){
     m_initial_state[11] = quat[2];
     m_initial_state[12] = quat[3];
 
-    double t0 = 0.0;
-    //print results in a file
-    FILE* init_file = fopen("initial_state.txt", "w");
-    fprintf(init_file, "Initial State\n");
-    fprintf(init_file, "  Time[s]              u[ft/s]            v[ft/s]                w[ft/s]              p[rad/s]             q[rad/s]             r[rad/s]             x[ft]                y[ft]                z[ft]                e0                   ex                   ey                   ez\n");
-    fprintf(init_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, m_initial_state[0], m_initial_state[1], m_initial_state[2],m_initial_state[3],m_initial_state[4], m_initial_state[5], m_initial_state[6], m_initial_state[7], m_initial_state[8], m_initial_state[9], m_initial_state[10], m_initial_state[11], m_initial_state[12]);
+    printf("Quaternions \n");
+    printf("e0                    = %20.12e\n", m_initial_state[9]);
+    printf("ex                    = %20.12e\n", m_initial_state[10]);
+    printf("ey                    = %20.12e\n", m_initial_state[11]);
+    printf("ez                    = %20.12e\n\n", m_initial_state[12]);
+
+
+    // // convert phi, theta, and psi to a quat
+    // double* quat = new double[4];
+    // euler_to_quat(&m_initial_state[9], quat);
+
+    // // normalize the quat
+    // quat_norm(quat);
+
+    // // store the quat in y0
+    // m_initial_state[9] = quat[0];
+    // m_initial_state[10] = quat[1];
+    // m_initial_state[11] = quat[2];
+    // m_initial_state[12] = quat[3];
+
+    // double t0 = 0.0;
+    // //print results in a file
+    // FILE* init_file = fopen("initial_state.txt", "w");
+    // fprintf(init_file, "Initial State\n");
+    // fprintf(init_file, "  Time[s]              u[ft/s]            v[ft/s]                w[ft/s]              p[rad/s]             q[rad/s]             r[rad/s]             x[ft]                y[ft]                z[ft]                e0                   ex                   ey                   ez\n");
+    // fprintf(init_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, m_initial_state[0], m_initial_state[1], m_initial_state[2],m_initial_state[3],m_initial_state[4], m_initial_state[5], m_initial_state[6], m_initial_state[7], m_initial_state[8], m_initial_state[9], m_initial_state[10], m_initial_state[11], m_initial_state[12]);
         
 }
 
 void aircraft::init_from_trim(){
     double sa,ca, sb, cb, sp, cp, sg, st, ct, u, v, w, pqr_constant, var, grav;
+    double p, q, r;
     double term, bottom, big_term, theta1, theta2, check1, check2;
     double Rmax, n_a, qbar, CLift, thrust_mag;
     double G[6], delta_G[6] ;
@@ -543,7 +584,7 @@ void aircraft::init_from_trim(){
             cout<< G[2]*180.0/pi<< "      " << G[3]*180.0/pi <<  "      " << G[4]*180.0/pi << endl;
             
             printf("\np[deg/s]               q[deg/s]             r[deg/s]                 phi[deg]                theta[deg]        \n");      
-            cout<< y[3]*180.0/pi << "      " << y[4]*180.0/pi << "      " << y[5]*180.0/pi << "      " << phi*180.0/pi << "      " << theta*180.0/pi << endl;
+            cout<<y[3]*180.0/pi << "      " << y[4]*180.0/pi << "      " << y[5]*180.0/pi << "      " << phi*180.0/pi << "      " << theta*180.0/pi << endl;
             
             printf("\nLoad Factor           Max Residual\n");
             cout<< n_a << "             " <<   Rmax  <<  endl;}
@@ -569,10 +610,77 @@ void aircraft::init_from_trim(){
     printf("rudder[deg]          = %20.12e\n", G[4]*180.0/pi);
     printf("Trottle              = %20.12e\n", G[5]);
     printf("Thrust[lbf]          = %20.12e\n\n", thrust_mag);
-    printf("check");
+    //printf("check");
 
         
+    // put things in initial state vector so the sim can be run
 
+    alpha = G[0];
+    p = y[3];
+    q = y[4];
+    r = y[5];
+
+
+    // make sure m_controls are correct final G values
+    m_controls[0]    = G[2]; // da
+    m_controls[1]    = G[3]; // de
+    m_controls[2]    = G[4]; // dr
+    m_controls[3]    = G[5]; // tau  
+    
+    m_initial_state = new double[m_size];      
+    m_initial_state[0]  = m_V*cos(alpha)*cos(beta);  // u
+    m_initial_state[1]  = m_V*sin(beta);               // v
+    m_initial_state[2]  = m_V*sin(alpha)*cos(beta);  // w
+    m_initial_state[3]  = p;              // p
+    m_initial_state[4]  = q;              // q
+    m_initial_state[5]  = r;              // r
+    m_initial_state[6]  = 0.0;              // xf
+    m_initial_state[7]  = 0.0;              // yf
+    m_initial_state[8]  = -m_altitude;      // zf
+    m_initial_state[9]  = phi;           // phi
+    m_initial_state[10] = theta;      // theta
+    m_initial_state[11] = m_heading;        // psi
+
+    
+    // //print results in a file
+    // FILE* init_file = fopen("initial_state.txt", "w");
+    // fprintf(init_file, "Initial State\n");
+    // fprintf(init_file, "  Time[s]              u[ft/s]            v[ft/s]                w[ft/s]              p[rad/s]             q[rad/s]             r[rad/s]             x[ft]                y[ft]                z[ft]                e0                   ex                   ey                   ez\n");
+    // fprintf(init_file, "%20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e %20.12e\n", t0, m_initial_state[0], m_initial_state[1], m_initial_state[2],m_initial_state[3],m_initial_state[4], m_initial_state[5], m_initial_state[6], m_initial_state[7], m_initial_state[8], m_initial_state[9], m_initial_state[10], m_initial_state[11], m_initial_state[12]);
+    printf("\n\n\n--------------- Initial State Vector ---------------\n");
+    printf("u[ft/s]              = %20.12e\n", m_initial_state[0]);
+    printf("v[ft/s]              = %20.12e\n", m_initial_state[1]);
+    printf("w[ft/s]              = %20.12e\n", m_initial_state[2]);
+    printf("p[deg/s]             = %20.12e\n", m_initial_state[3]*180.0/pi);
+    printf("q[deg/s]             = %20.12e\n", m_initial_state[4]*180.0/pi);
+    printf("r[deg/s]             = %20.12e\n", m_initial_state[5]*180.0/pi);
+    printf("xf[ft]               = %20.12e\n", m_initial_state[6]);
+    printf("y[ft]                = %20.12e\n", m_initial_state[7]);
+    printf("z[ft]                = %20.12e\n\n", m_initial_state[8]);
+    
+    printf("Euler Angles \n");
+    printf("phi[deg]             = %20.12e\n", m_initial_state[9]*180.0/pi);
+    printf("theta[deg]           = %20.12e\n", m_initial_state[10]*180.0/pi);
+    printf("psi[deg]             = %20.12e\n\n", m_initial_state[11]*180.0/pi);
+    
+    // convert phi, theta, and psi to a quat
+    double* quat = new double[4];
+    euler_to_quat(&m_initial_state[9], quat);
+
+    // normalize the quat
+    quat_norm(quat);
+
+    // store the quat in y0
+    m_initial_state[9] = quat[0];
+    m_initial_state[10] = quat[1];
+    m_initial_state[11] = quat[2];
+    m_initial_state[12] = quat[3];
+
+    printf("Quaternions \n");
+    printf("e0                    = %20.12e\n", m_initial_state[9]);
+    printf("ex                    = %20.12e\n", m_initial_state[10]);
+    printf("ey                    = %20.12e\n", m_initial_state[11]);
+    printf("ez                    = %20.12e\n\n", m_initial_state[12]);
 }
 
 void aircraft::calc_R(double G[6], double* y, double var, double theta, double ans[6], bool solve_traditional){
@@ -600,7 +708,7 @@ void aircraft::calc_R(double G[6], double* y, double var, double theta, double a
         m_controls[0]    = G[2]; // da
         m_controls[1]    = G[3]; // de
         m_controls[2]    = G[4]; // dr
-        m_controls[3]    = G[5]; // dr
+        m_controls[3]    = G[5]; // tau
 
         sp = sin(phi);
         cp = cos(phi);
@@ -874,7 +982,7 @@ void aircraft::run_sim()
     m_check_file = fopen("check_rk4.txt", "w");
     fprintf(m_check_file, "  Time[s]              udot                vdot                 wdot                  pdot               qdot                 rdot                 xdot                  ydot                 zdot                   e0dot                exdot               eydot              ezdot\n");
     
-    FILE* out_file = fopen("hoch_7_6.txt", "w");
+    FILE* out_file = fopen("hoch_7.txt", "w");
     fprintf(out_file, "  Time[s]              u[ft/s]            v[ft/s]                w[ft/s]              p[rad/s]             q[rad/s]             r[rad/s]             x[ft]                y[ft]                z[ft]                e0                   ex                   ey                   ez\n");
     
     double t0 = 0.0;

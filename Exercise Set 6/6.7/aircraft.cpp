@@ -491,7 +491,7 @@ void aircraft::run_sim()
     m_check_file = fopen("check_rk4.txt", "w");
     fprintf(m_check_file, "  Time[s]              udot                vdot                 wdot                  pdot               qdot                 rdot                 xdot                  ydot                 zdot                   e0dot                exdot               eydot              ezdot\n");
     
-    FILE* out_file = fopen("hoch_6_2.txt", "w");
+    FILE* out_file = fopen("hoch_6_7.txt", "w");
     fprintf(out_file, "  Time[s]              u[ft/s]            v[ft/s]                w[ft/s]              p[rad/s]             q[rad/s]             r[rad/s]             x[ft]                y[ft]                z[ft]                e0                   ex                   ey                   ez\n");
     
     double t0 = 0.0;
