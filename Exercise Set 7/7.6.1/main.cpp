@@ -5,7 +5,7 @@ int main (int argc, char * const argv[])
 {
     cout<<"Program started: \n"<<endl;
 
-    aircraft* my_aircraft = new aircraft("aircraft_7_6_1.json");
+    aircraft* my_aircraft = new aircraft("aircraft_7_6_2.json");
     
     my_aircraft->init_sim();
     printf("Running sim\n\n");

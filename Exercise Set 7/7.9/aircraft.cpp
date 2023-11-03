@@ -543,7 +543,7 @@ void aircraft::init_from_trim(){
             cout<< G[2]*180.0/pi<< "      " << G[3]*180.0/pi <<  "      " << G[4]*180.0/pi << endl;
             
             printf("\np[deg/s]               q[deg/s]             r[deg/s]                 phi[deg]                theta[deg]        \n");      
-            cout<< y[3]*180.0/pi << "      " << y[4]*180.0/pi << "      " << y[5]*180.0/pi << "      " << phi*180.0/pi << "      " << theta*180.0/pi << endl;
+            cout<<y[3]*180.0/pi << "      " << y[4]*180.0/pi << "      " << y[5]*180.0/pi << "      " << phi*180.0/pi << "      " << theta*180.0/pi << endl;
             
             printf("\nLoad Factor           Max Residual\n");
             cout<< n_a << "             " <<   Rmax  <<  endl;}

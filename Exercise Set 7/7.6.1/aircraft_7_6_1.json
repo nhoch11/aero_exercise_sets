@@ -57,6 +57,7 @@
                               ["All types require *elevation_angle[deg] or climb_angle[deg]."],
                               ["Starred ’*’ inputs override"]],
             "elevation_angle[deg]" : 17.59643219761,
+            "xelevation_angle[deg]" : 0.0,
             "climb_angle[deg]" : 0.0,
             "bank_angle[deg]" : 0.0,
             "sideslip_angle[deg]" : 0.0,
