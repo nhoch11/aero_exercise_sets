@@ -48,6 +48,7 @@
             "elevator[deg]" : -3.566024357159166,
             "rudder[deg]" : 0.0,
             "throttle" : 0.1383896327861029
+            
         },
 
         "trim" : {
@@ -65,7 +66,7 @@
                 "relaxation_factor" : 0.9,
                 "tolerance" : 1.0e-10,
                 "max_iterations" : 100,
-                "verbose" : true
+                "verbose" : false
             }
         }
     },
