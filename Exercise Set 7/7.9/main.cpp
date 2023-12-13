@@ -11,7 +11,6 @@ int main (int argc, char * const argv[])
     printf("Running sim\n\n");
     my_aircraft->run_sim();
 
-    
     cout<<"Program completed: "<<endl;
 
     return 0;
