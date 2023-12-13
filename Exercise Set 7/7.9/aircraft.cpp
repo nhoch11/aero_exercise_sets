@@ -610,7 +610,7 @@ void aircraft::init_from_trim(){
     printf("rudder[deg]          = %20.12e\n", G[4]*180.0/pi);
     printf("Trottle              = %20.12e\n", G[5]);
     printf("Thrust[lbf]          = %20.12e\n\n", thrust_mag);
-    //printf("check");
+    printf("check");
 
         
     // put things in initial state vector so the sim can be run

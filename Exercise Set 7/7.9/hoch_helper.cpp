@@ -173,7 +173,8 @@ void rk4_array(double t0, double* y0, double dt, int size, double* ans)
 }
 
 void array_copy(double* A, double* B, int size)
-{   // B = A ( copy A into B)
+{
+    // B = A ( copy A into B)
     for (int i=0; i < size; i++){
         B[i] = A[i];
     }
@@ -355,7 +356,6 @@ void matrix_vector_mult_3(double rm[3][3], double v[3], double* ans){
             }
     }
 }
-
 void array_print(double* arr, int size){
     cout<< "[";
     for ( int i = 0; i < size; i++){
